@@ -1,56 +1,59 @@
-# Equip Me Maybe: foundation PHP
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-These files are an overlay for a fresh Laravel 11/12 project. Copy them over a new install.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-## Setup
+## About Laravel
 
-```bash
-composer create-project laravel/laravel equip-me-maybe
-cd equip-me-maybe
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-composer require laravel/breeze --dev
-php artisan breeze:install blade      # Tailwind + Blade auth pages
-php artisan install:api               # Sanctum + routes/api.php + personal_access_tokens migration
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-# Now copy this folder's contents over the project (say yes to overwrite):
-#   app/  bootstrap/app.php  database/  routes/  tests/
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-php artisan migrate:fresh --seed
-php artisan storage:link
-php artisan test
-```
+## Learning Laravel
 
-Demo logins (password `password`): head1@equip.test, manager1@equip.test, student1@equip.test,
-faculty1@equip.test, auditor1@equip.test.
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
 
-## What is included
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-| Area | Files |
-| --- | --- |
-| Roles, statuses | `app/Enums/*` |
-| Overlap rule (pure, unit testable) | `app/Support/ReservationWindow.php` |
-| Business rules (overlap, repair gate, compliance gate, lifecycle) | `app/Services/ReservationService.php` |
-| Gates | `app/Providers/AppServiceProvider.php` |
-| Policies | `app/Policies/*` (auto discovered) |
-| Models and relationships | `app/Models/*` |
-| Web controllers | `app/Http/Controllers/Web/*` |
-| API controllers and Resources | `app/Http/Controllers/Api/*`, `app/Http/Resources/*` |
-| Form Requests | `app/Http/Requests/*` |
-| Migrations, factories, seeder | `database/*` |
-| Routes | `routes/web.php`, `routes/api.php`, `bootstrap/app.php` |
-| PHPUnit tests | `tests/Unit/*`, `tests/Feature/*` |
+## Laravel Sponsors
 
-## Not included yet (next step)
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-Blade views. Controllers return these view names, which still need to be created in `resources/views`:
-`equipment.{index,show,create,edit}`, `reservations.{index,create,queue}`,
-`documents.{index,checklist}`, `maintenance.index`, `department.{index,breakdowns,users}`.
-`dashboard` and the auth pages come from Breeze.
+### Premium Partners
 
-Feature tests avoid rendering views, so they pass before the views exist.
+- **[Vehikl](https://vehikl.com)**
+- **[Tighten Co.](https://tighten.co)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Redberry](https://redberry.international/laravel-development)**
+- **[Active Logic](https://activelogic.com)**
 
-## Notes
+## Contributing
 
-- `role`, `lab_id` and `department_id` are not mass assignable, so registration can only ever create a student.
-- Seeded documents all share `storage/app/private/documents/sample.pdf` so downloads work in demos.
-- `qr_code` stores the code string. To render an actual QR image later, `composer require simplesoftwareio/simple-qrcode`.
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+
+## Code of Conduct
+
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+
+## Security Vulnerabilities
+
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+
+## License
+
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

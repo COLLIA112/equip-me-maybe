@@ -1,0 +1,62 @@
+
+  GET|HEAD  / ...................................................................................... routes/web.php:13
+  GET|HEAD  api/equipment .............................................................. Api\EquipmentController@index
+  GET|HEAD  api/equipment/{equipment}/authorization ........................... Api\CheckpointController@authorization
+  POST      api/login .................................................................. Api\AuthTokenController@store
+  DELETE    api/logout ............................................................... Api\AuthTokenController@destroy
+  GET|HEAD  api/reservations/active .................................................. Api\CheckpointController@active
+  GET|HEAD  confirm-password .............................. password.confirm › Auth\ConfirmablePasswordController@show
+  POST      confirm-password ................................................ Auth\ConfirmablePasswordController@store
+  GET|HEAD  dashboard ............................................................ dashboard › Web\DashboardController
+  GET|HEAD  department ....................................... department.index › Web\DepartmentReportController@index
+  GET|HEAD  department/equipment/{equipment}/breakdowns department.breakdowns › Web\DepartmentReportController@breakd…
+  GET|HEAD  department/users ......................................... department.users › Web\UserRoleController@index
+  PATCH     department/users/{user} .......................... department.users.update › Web\UserRoleController@update
+  GET|HEAD  documents/checklist ............................... documents.checklist › Web\DocumentController@checklist
+  DELETE    documents/{document} .................................. documents.destroy › Web\DocumentController@destroy
+  POST      documents/{document}/acknowledge .............. documents.acknowledge › Web\DocumentController@acknowledge
+  GET|HEAD  documents/{document}/download ....................... documents.download › Web\DocumentController@download
+  POST      email/verification-notification ... verification.send › Auth\EmailVerificationNotificationController@store
+  GET|HEAD  equipment ................................................ equipment.index › Web\EquipmentController@index
+  POST      equipment ................................................ equipment.store › Web\EquipmentController@store
+  GET|HEAD  equipment/create ....................................... equipment.create › Web\EquipmentController@create
+  PUT       equipment/{equipment} .................................. equipment.update › Web\EquipmentController@update
+  DELETE    equipment/{equipment} ................................ equipment.destroy › Web\EquipmentController@destroy
+  GET|HEAD  equipment/{equipment} ...................................... equipment.show › Web\EquipmentController@show
+  GET|HEAD  equipment/{equipment}/documents ........................... documents.index › Web\DocumentController@index
+  POST      equipment/{equipment}/documents ........................... documents.store › Web\DocumentController@store
+  GET|HEAD  equipment/{equipment}/edit ................................. equipment.edit › Web\EquipmentController@edit
+  GET|HEAD  equipment/{equipment}/reserve ..................... reservations.create › Web\ReservationController@create
+  POST      equipment/{equipment}/reserve ....................... reservations.store › Web\ReservationController@store
+  GET|HEAD  forgot-password ............................... password.request › Auth\PasswordResetLinkController@create
+  POST      forgot-password .................................. password.email › Auth\PasswordResetLinkController@store
+  GET|HEAD  login ................................................. login › Auth\AuthenticatedSessionController@create
+  POST      login .......................................................... Auth\AuthenticatedSessionController@store
+  POST      logout .............................................. logout › Auth\AuthenticatedSessionController@destroy
+  GET|HEAD  maintenance ....................................... maintenance.index › Web\MaintenanceLogController@index
+  POST      maintenance ....................................... maintenance.store › Web\MaintenanceLogController@store
+  PATCH     maintenance/{log}/resolve ..................... maintenance.resolve › Web\MaintenanceLogController@resolve
+  PUT       password ................................................ password.update › Auth\PasswordController@update
+  GET|HEAD  profile ............................................................ profile.edit › ProfileController@edit
+  PATCH     profile ........................................................ profile.update › ProfileController@update
+  DELETE    profile ...................................................... profile.destroy › ProfileController@destroy
+  GET|HEAD  queue ............................................... reservations.queue › Web\ReservationController@queue
+  GET|HEAD  register ................................................. register › Auth\RegisteredUserController@create
+  POST      register ............................................................. Auth\RegisteredUserController@store
+  GET|HEAD  reservations ........................................ reservations.index › Web\ReservationController@index
+  PATCH     reservations/{reservation}/approve .............. reservations.approve › Web\ReservationController@approve
+  PATCH     reservations/{reservation}/cancel ................. reservations.cancel › Web\ReservationController@cancel
+  PATCH     reservations/{reservation}/handover ........... reservations.handover › Web\ReservationController@handover
+  PATCH     reservations/{reservation}/reject ................. reservations.reject › Web\ReservationController@reject
+  PATCH     reservations/{reservation}/return ................. reservations.return › Web\ReservationController@return
+  POST      reset-password ......................................... password.store › Auth\NewPasswordController@store
+  GET|HEAD  reset-password/{token} ................................ password.reset › Auth\NewPasswordController@create
+  GET|HEAD  sanctum/csrf-cookie .................... sanctum.csrf-cookie › Laravel\Sanctum › CsrfCookieController@show
+  GET|HEAD  storage/{path} storage.local › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvid…
+  PUT       storage/{path} storage.local.upload › vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServic…
+  GET|HEAD  up ........... vendor/laravel/framework/src/Illuminate/Foundation/Configuration/ApplicationBuilder.php:219
+  GET|HEAD  verify-email ................................ verification.notice › Auth\EmailVerificationPromptController
+  GET|HEAD  verify-email/{id}/{hash} ................................ verification.verify › Auth\VerifyEmailController
+
+                                                                                                   Showing [58] routes
+
