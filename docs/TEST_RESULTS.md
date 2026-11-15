@@ -1,6 +1,6 @@
 # Executed release verification
 
-Recorded on 16 November 2026 (Asia/Manila). The local branch is `feature/quality-of-life`; no GitHub push or main-branch modification was performed. These results concern the uploaded project plus the implemented original phases and additional improvements.
+Recorded on 16 November 2026 (Asia/Manila). The local branch is `feature/quality-of-life`; verification was completed locally before the user subsequently authorized delivery to `Myst-V/test` on `main`. These results concern the uploaded project plus the implemented original phases and additional improvements.
 
 ## Final command output
 

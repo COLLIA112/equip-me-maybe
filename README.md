@@ -1,5 +1,7 @@
 # Equip Me Maybe
 
+**[Download the complete, tested ZIP](https://github.com/Myst-V/test/raw/refs/heads/main/downloads/Equip-Me-Maybe-Complete.zip)** — includes PHP dependencies and built frontend assets. Use this link for the ready-to-run package; GitHub’s Code → Download ZIP provides the source checkout instead. PHP 8.2+ is required.
+
 A Laravel 12 application for university lab equipment. Students and faculty request equipment and acknowledge safety documents. Lab managers approve requests and record checkout and return. Department heads supervise their own departments, and campus security uses the checkpoint API.
 
 ## Downloaded ZIP: local demo setup

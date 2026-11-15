@@ -1,3 +1,5 @@
+> Delivery update: the user supplied `Myst-V/test`, made it public, and explicitly authorized uploading to `main`. The tested bundle is in `downloads/Equip-Me-Maybe-Complete.zip`; earlier local-only notes below describe the verification checkpoint before that authorization.
+
 # Saved progress — 16 November 2026 (Asia/Manila)
 
 Branch: `feature/quality-of-life`. Local uploaded-source checkout only; no remote configured and no pushes to main.
