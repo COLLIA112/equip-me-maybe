@@ -10,7 +10,7 @@ Use a local seeded database. Accounts and setup are in the project README. Use e
 | Faculty | Create a regular request in another student's pending window, then try a faculty class-session request for that same item and window. Repeat on a separate window with an approved booking. | Regular requests leave the student's pending entry alone. A class-session request rejects overlapping pending student requests and stays Pending itself. An approved or checked-out overlap blocks the class-session request and keeps the other records unchanged. |
 | Lab manager | Open the queue for your lab. Try approval before the borrower acknowledges a required document. After acknowledgement, approve, hand over and receive the item. Report two breakdowns during a checkout and resolve them one by one. | The compliance gate blocks approval/handover until acknowledgement. Checkout sets equipment to Reserved. An unresolved log keeps equipment Under repair. Resolving the last log during checkout restores Reserved. A return clears the checkout and frees the item once repairs are resolved. |
 | Department head | Open Department and compare labs, repair totals, and recent maintenance. Open Maintenance and report an issue using an item in your department. Open the catalog and try a known equipment or breakdown URL for another department. | The dropdown and reports are department-scoped. Direct URLs outside the department return 403. User role changes are scoped to the department and unassigned users. |
-| Security auditor | Import the Postman collection, log in, list equipment, verify the QR code for an in-window checkout, and list active checkouts. Run the four negative access cases from API.md. | Checkpoint requests require the Sanctum ability. The assignment scenarios return 200, 401, 403, and 404 as documented. The standard equipment web catalog is forbidden for this role. |
+| Security auditor | Import the Postman collection, log in, list equipment, verify the QR code for an in-window checkout, and list active checkouts. Run the four negative access cases from API.md. | Checkpoint requests require the Sanctum ability. The assignment scenarios return 200, 401, 403, and 404 as documented. Authenticated application pages, including dashboard, profile and checklist, are forbidden for this API-only role; logout remains available. |
 
 ## Additional manual checks
 
@@ -18,13 +18,15 @@ Use a local seeded database. Accounts and setup are in the project README. Use e
 - Download a private document using its authorized route. Verify the same path under `/storage/documents/` cannot serve it.
 - Submit two overlapping requests while both are pending, approve the first, then attempt the second. The last attempt should show the booked window and keep the second reservation pending. Use the dedicated PHPUnit integration test to verify the row lock with two simultaneous connections.
 - Open equipment details as a borrower and verify the QR depicts the displayed equipment code. As a manager or head responsible for the item, open **Print QR label**. In print preview verify the item name, serial and QR code are visible and the sidebar and buttons are hidden. Scan with a phone before printing labels in bulk.
+- Change catalog, queue, My Reservations, maintenance and document filters and verify select changes submit immediately. Type into a search field, wait about 400 ms, and verify focus/caret and valid selected values survive. Clear filter appears only when a valid filter is active. Sort and paginate without losing those filters.
+- Inspect a checked-out reservation past its due time: it must show a red Overdue badge. The manager dashboard Overdue returns shortcut must open the overdue queue.
 - In browser device mode, set width to 375px. Open the mobile menu, tab through it and close it with Escape. Check that tables scroll within their cards. Cancel an action in the confirmation dialog and verify nothing changes. Confirm an action and verify only one request is sent. Check the sign-in, registration, password reset and profile layouts.
 
 ## Demo script
 
 1. **Department head.** Show the department report and one maintenance record. Explain that the department owns labs and each lab owns equipment. Show a forbidden breakdown link from another department.
 2. **Lab manager.** Add or open an Electronics Lab item, show its QR code and print label, and upload a required safety PDF. Leave the item available.
-3. **Student.** Request the item. Open the queue as the manager to show the missing-document state. Switch back to the student, download and acknowledge the PDF, then return to the queue and approve as manager. Open the reservation timeline to show the approval.
+3. **Student.** Request the item. Open the queue as the manager to show the missing-document state. Switch back to the student, download and acknowledge the PDF, then return to the queue and approve as manager. Open the reservation timeline to show the recorded approval actor and time. Show the names of missing required documents before acknowledgement, then demonstrate the enabled action.
 4. **Faculty.** Use a different available item. Prepare a pending student request, then submit an overlapping class-session request as faculty. Open the student's history and the faculty's reservation to show the two outcomes. Keep the earlier approved student booking intact.
 5. **Security auditor.** Use Postman to check a current checkout using the printed equipment code, then try an unknown code with the same token. After the lab manager records the return, check that authorization for the known item is false.
 
@@ -38,9 +40,12 @@ Use a local seeded database. Accounts and setup are in the project README. Use e
 | Equipment → Document ↔ User | An item can have many private documents. The `document_user` pivot records the individual download and acknowledgement timestamps. |
 | Reservation → Equipment and Users | Each reservation belongs to one item and one borrower, with an optional approver. It records the time window, status, faculty flag, handover and return timestamps. |
 | MaintenanceLog → Equipment, User, Reservation | Every log has one item and reporter. The optional reservation records who had the item at breakdown time. |
+| Lab → Equipment → Reservation | Has-many-through: `$lab->reservations` aggregates bookings across items in that lab. |
 | User → Sanctum tokens | A user can own multiple tokens. Checkpoint routes check the required token ability. |
 
-## Feature-to-requirement mapping
+## Earlier delivery checkpoints
+
+The following table records the pre-quality-of-life delivery checkpoints. For the complete eight mandatory requirements, original Phase 0–9 mapping and five-role action matrix, see [QUALITY_OF_LIFE.md](QUALITY_OF_LIFE.md).
 
 | Task | Implementation and evidence |
 |---|---|
@@ -54,8 +59,8 @@ Use a local seeded database. Accounts and setup are in the project README. Use e
 
 ## Known limitations
 
-- Displacement only changes existing pending student requests at the time of a valid class-session request. The software records the resulting status and does not send notifications.
-- Approval history records the approver. An exact approval timestamp is unavailable in the current schema. The timeline shows recorded creation, handover and return times.
+- Displacement only changes existing pending student requests at the time of a valid class-session request. The software records the rejection reason for the student; email/in-app notifications belong to the follow-up scope.
+- New lifecycle actions record the approver, handover/return managers and exact times. Historical records from before the additive migration can have missing actor/time data; the UI must not invent those values.
 - Seeded checkouts are relative to the first seed. A rerun preserves existing data and does not move those dates forward.
 - The QR is an equipment identifier. Checkpoint authorization comes from the authenticated API and the current reservation, so scanning a QR with a generic camera only reveals the item's code.
 - The local example uses the log mailer. Configure a real mail transport before demonstrating password reset by inbox delivery.
