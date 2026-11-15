@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    [x-cloak] { display: none !important; }
+
+    :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+    }
+
+    aside :is(a, button):focus-visible {
+        outline-color: #93c5fd;
+    }
+
+    button:disabled,
+    [data-submitting-control] {
+        @apply cursor-not-allowed opacity-60;
+    }
+
+    [data-submitting-control] {
+        cursor: progress;
+        pointer-events: none;
+    }
+
+    th, td {
+        overflow-wrap: anywhere;
+    }
+}
+
+@layer components {
+    .page-title {
+        @apply text-xl font-bold tracking-tight text-slate-950 sm:text-2xl;
+    }
+
+    .responsive-table {
+        @apply relative max-w-full overflow-x-auto overscroll-x-contain;
+    }
+
+    .responsive-table table {
+        min-width: 34rem;
+    }
+
+    .stat-label {
+        @apply text-sm font-semibold text-slate-600;
+    }
+
+    .stat-number {
+        @apply mt-1 text-3xl font-bold tracking-tight text-slate-950;
+    }
+}
