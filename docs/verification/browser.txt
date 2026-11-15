@@ -1,0 +1,158 @@
+
+> test:browser
+> node tests/Browser/run.mjs
+
+
+   INFO  Preparing database.  
+
+  Creating migration table ....................................... 5.53ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000000_create_users_table .......................... 11.32ms DONE
+  0001_01_01_000001_create_cache_table ........................... 6.44ms DONE
+  0001_01_01_000002_create_jobs_table ............................ 7.76ms DONE
+  2026_11_12_000001_create_departments_table ..................... 3.46ms DONE
+  2026_11_12_000002_create_labs_table ............................ 2.34ms DONE
+  2026_11_12_000003_add_role_columns_to_users_table ............. 23.01ms DONE
+  2026_11_12_000004_create_equipment_table ....................... 6.84ms DONE
+  2026_11_12_000005_create_tags_and_equipment_tag_tables ......... 4.49ms DONE
+  2026_11_12_000006_create_documents_and_document_user_tables .... 3.12ms DONE
+  2026_11_12_000007_create_reservations_table .................... 4.07ms DONE
+  2026_11_12_000008_create_maintenance_logs_table ................ 1.48ms DONE
+  2026_11_12_093256_create_personal_access_tokens_table .......... 5.44ms DONE
+  2026_11_15_000001_add_class_session_to_reservations_table ...... 1.43ms DONE
+  2026_11_15_100001_add_reservation_feedback_and_timeline_fields  46.76ms DONE
+  2026_11_15_100010_add_return_condition_to_reservations ......... 4.84ms DONE
+  2026_11_15_100020_create_lab_closures_table .................... 3.39ms DONE
+  2026_11_15_100030_add_repair_cost_to_maintenance_logs_table .... 1.87ms DONE
+  2026_11_15_100040_add_notifications_wishlists_and_activity_logs  12.11ms DONE
+
+
+   INFO  Seeding database.  
+
+
+PASS manager creates equipment
+PASS manager uploads private required PDF
+PASS student requests with default one-hour window
+PASS approval disabled and names required document
+PASS acknowledgement disabled before download
+PASS download then acknowledge required PDF
+PASS manager approves once compliance complete
+PASS manager hands over
+PASS return modal cancellation submits nothing
+PASS return modal confirmation sends exactly one POST
+PASS timeline shows actors and timestamps
+PASS manager rejects with visible reason
+PASS private PDF URL cannot be opened
+PASS malformed equipment filters ignored
+PASS API missing token401
+PASS auditor token issuance
+PASS API in-window active checkout authorized
+PASS API overdue checkout unauthorized
+PASS API unknown code stable404
+PASS API revoke token then401
+{"passed":20,"failed":0,"errors":[]}
+
+PASS guest login mobile layout {"vw":375,"width":375}
+PASS student login {"landing":"/dashboard"}
+PASS faculty login {"landing":"/dashboard"}
+PASS manager login {"landing":"/dashboard"}
+PASS head login {"landing":"/department"}
+PASS auditor login {"landing":"/dashboard"}
+PASS student desktop /dashboard {"vw":1440,"width":1440}
+PASS student 375px /dashboard {"vw":375,"width":375}
+PASS student desktop /equipment {"vw":1440,"width":1440}
+PASS student 375px /equipment {"vw":375,"width":375}
+PASS student desktop /reservations {"vw":1440,"width":1440}
+PASS student 375px /reservations {"vw":375,"width":375}
+PASS student desktop /documents/checklist {"vw":1440,"width":1440}
+PASS student 375px /documents/checklist {"vw":375,"width":375}
+PASS student desktop /profile {"vw":1440,"width":1440}
+PASS student 375px /profile {"vw":375,"width":375}
+PASS faculty desktop /dashboard {"vw":1440,"width":1440}
+PASS faculty 375px /dashboard {"vw":375,"width":375}
+PASS faculty desktop /equipment {"vw":1440,"width":1440}
+PASS faculty 375px /equipment {"vw":375,"width":375}
+PASS faculty desktop /reservations {"vw":1440,"width":1440}
+PASS faculty 375px /reservations {"vw":375,"width":375}
+PASS manager desktop /dashboard {"vw":1440,"width":1440}
+PASS manager 375px /dashboard {"vw":375,"width":375}
+PASS manager desktop /equipment {"vw":1440,"width":1440}
+PASS manager 375px /equipment {"vw":375,"width":375}
+PASS manager desktop /queue {"vw":1440,"width":1440}
+PASS manager 375px /queue {"vw":375,"width":375}
+PASS manager desktop /maintenance {"vw":1440,"width":1440}
+PASS manager 375px /maintenance {"vw":375,"width":375}
+PASS head desktop /department {"vw":1440,"width":1440}
+PASS head 375px /department {"vw":375,"width":375}
+PASS head desktop /department/users {"vw":1440,"width":1440}
+PASS head 375px /department/users {"vw":375,"width":375}
+PASS head desktop /department/labs {"vw":1440,"width":1440}
+PASS head 375px /department/labs {"vw":375,"width":375}
+PASS head desktop /maintenance {"vw":1440,"width":1440}
+PASS head 375px /maintenance {"vw":375,"width":375}
+PASS auditor forbidden /dashboard {"status":403}
+PASS auditor forbidden /profile {"status":403}
+PASS auditor forbidden /documents/checklist {"status":403}
+PASS auditor forbidden /equipment {"status":403}
+PASS instant select auto-submits GET with selected value 
+PASS debounced search retains focus and caret {"focused":true,"start":4,"value":"QA Browser"}
+PASS Clear filter clears query and conditional link 
+PASS reservation default end and manual end preservation {"minimum":"2026-11-15T16:37","start":"2026-11-25T09:00","end":"2026-11-25T12:00"}
+PASS reservation browser conflict hint {"equipment":1,"window":{"start":"2026-11-15T15:35","end":"2026-11-15T19:35","label":"Nov 15, 2026 3:35 PM to Nov 15, 2026 7:35 PM"}}
+PASS flash accessible and dismiss button works 
+PASS axe login {"violations":0}
+PASS axe catalog {"violations":0}
+PASS axe queue {"violations":0}
+PASS axe department {"violations":0}
+PASS no browser JavaScript exceptions {"errors":0}
+SUMMARY {"passed":53,"failed":0}
+
+PASS slash shortcut focuses header search without typing slash
+PASS breadcrumbs preserve filters and weekly calendar navigation
+PASS mark-all stays disabled until both required PDFs downloaded
+PASS checklist progress reflects acknowledged documents
+PASS wishlist saves unavailable item for faculty
+PASS bulk approve preserves compliance per row
+PASS approved reservation downloads a valid calendar file
+PASS Reserve again pre-fills future date and original duration
+PASS counter lookup finds equipment by QR text
+PASS camera scan has an accessible unsupported-device fallback
+PASS damaged return creates an open linked maintenance record
+PASS resolving repair sends wishlist availability notification
+PASS notification bell and mark-all-read work through the actual form
+PASS CSV import and scoped export work in browser
+PASS clone requires a new serial and gets its own QR code
+PASS bulk QR label printing hides sidebar in print mode
+PASS lab closure form blocks intersecting borrower request
+PASS department period, charts, exports and print report work
+PASS activity history shows actors and recorded actions
+PASS remote device dates still use the displayed application timezone
+PASS dark mode persists after reload
+PASS dark accessibility student /equipment
+PASS dark accessibility student /equipment/256
+PASS dark accessibility student /notifications
+PASS dark accessibility student /wishlist
+PASS dark accessibility manager /queue
+PASS dark accessibility manager /counter
+PASS dark accessibility manager /equipment-tools
+PASS dark accessibility manager /lab-closures
+PASS dark accessibility head /department
+PASS 375px extra layout /wishlist
+PASS 375px extra layout /notifications
+PASS 375px extra layout /activities
+PASS 375px extra layout /equipment/256
+PASS 375px extra layout /equipment-tools
+PASS 375px extra layout /lab-closures
+PASS 375px extra layout /counter
+PASS 375px extra layout /department
+PASS extra actions have no JavaScript exceptions
+SUMMARY {"passed":39,"failed":0}
+
+Browser artifacts: /tmp/equip-maybe-browser-60jrf3
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

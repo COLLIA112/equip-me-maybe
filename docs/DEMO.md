@@ -64,3 +64,13 @@ The following table records the pre-quality-of-life delivery checkpoints. For th
 - Seeded checkouts are relative to the first seed. A rerun preserves existing data and does not move those dates forward.
 - The QR is an equipment identifier. Checkpoint authorization comes from the authenticated API and the current reservation, so scanning a QR with a generic camera only reveals the item's code.
 - The local example uses the log mailer. Configure a real mail transport before demonstrating password reset by inbox delivery.
+
+## Additional quality-of-life demo
+
+1. As student/faculty, search a QR code globally, open its week calendar, save it to the wishlist, download required PDFs and use Mark all as read. Show the progress bar, approved ICS download and Reserve again on a completed booking.
+2. As manager, select a compliant and noncompliant pending request together. Bulk approve and show the per-row skipped reason. Find an active checkout at the counter by QR text, record damage at return, then show the linked maintenance entry and resolve it. The watcher receives an availability notice.
+3. As manager, import the CSV template with new serials, clone an item with another unique serial and print the lab QR labels. Schedule a closure that does not overlap an existing approved booking; show that an intersecting request is rejected.
+4. As head, select a report period, show utilization/charts/recorded repair costs and download/print the scoped reports.
+5. Change dark mode, reopen a filtered list to show remembered choices, clear it, press `/` for search, and show the notification inbox and activity history. Run `php artisan schedule:work` in another terminal for scheduled notices.
+
+Detailed behavior, evidence and target-device checks: [ADDITIONAL_FEATURES.md](ADDITIONAL_FEATURES.md).

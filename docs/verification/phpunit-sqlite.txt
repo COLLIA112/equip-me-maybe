@@ -1,0 +1,517 @@
+
+   PASS  Tests\Unit\EquipmentStatusLabelTest
+  ✓ status label accessor formats status for display                     0.01s  
+  ✓ new equipment defaults to available
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true                                                    0.01s  
+
+   PASS  Tests\Unit\RepairGateTest
+  ✓ only items under repair block reservations
+
+   PASS  Tests\Unit\ReservationWindowTest
+  ✓ back to back windows do not overlap                                  0.02s  
+  ✓ one minute overlap is rejected
+  ✓ a window inside another overlaps
+  ✓ end must be after start
+
+   PASS  Tests\Feature\AccessControlTest
+  ✓ guests are redirected to login                                       0.18s  
+  ✓ student gets 403 on manager routes                                   0.04s  
+  ✓ student cannot approve a reservation                                 0.01s  
+  ✓ lab manager cannot edit another labs equipment                       0.02s  
+  ✓ lab manager can edit own labs equipment                              0.02s  
+  ✓ security auditor has no web access                                   0.01s  
+
+   PASS  Tests\Feature\AdministrationManagementTest
+  ✓ laboratory administration is department head only with data set #0   0.04s  
+  ✓ laboratory administration is department head only with data set #1   0.02s  
+  ✓ laboratory administration is department head only with data set #2   0.02s  
+  ✓ laboratory administration is department head only with data set #3   0.02s  
+  ✓ laboratory administration is department head only with data set #4   0.02s  
+  ✓ tag administration requires a manager or department head with data…  0.02s  
+  ✓ tag administration requires a manager or department head with data…  0.02s  
+  ✓ tag administration requires a manager or department head with data…  0.02s  
+  ✓ tag administration requires a manager or department head with data…  0.02s  
+  ✓ tag administration requires a manager or department head with data…  0.01s  
+  ✓ head cannot list edit or delete laboratories from another departmen… 0.02s  
+  ✓ used labs and tags cannot be deleted and show a reason               0.03s  
+  ✓ admin names validate required size and duplicates                    0.02s  
+
+   PASS  Tests\Feature\AuditorWebAccessTest
+  ✓ api only security auditor cannot open web pages with data set "audi… 0.01s  
+  ✓ api only security auditor cannot open web pages with data set "audi… 0.01s  
+  ✓ api only security auditor cannot open web pages with data set "audi… 0.02s  
+
+   PASS  Tests\Feature\Auth\AuthenticationTest
+  ✓ login screen can be rendered                                         0.02s  
+  ✓ users can authenticate using the login screen                        0.01s  
+  ✓ users can not authenticate with invalid password                     0.21s  
+  ✓ users can logout                                                     0.01s  
+
+   PASS  Tests\Feature\Auth\EmailVerificationTest
+  ✓ email verification screen can be rendered                            0.01s  
+  ✓ email can be verified                                                0.01s  
+  ✓ email is not verified with invalid hash                              0.01s  
+
+   PASS  Tests\Feature\Auth\PasswordConfirmationTest
+  ✓ confirm password screen can be rendered                              0.01s  
+  ✓ password can be confirmed                                            0.01s  
+  ✓ password is not confirmed with invalid password                      0.21s  
+
+   PASS  Tests\Feature\Auth\PasswordResetTest
+  ✓ reset password link screen can be rendered                           0.02s  
+  ✓ reset password link can be requested                                 0.21s  
+  ✓ reset password screen can be rendered                                0.22s  
+  ✓ password can be reset with valid token                               0.22s  
+
+   PASS  Tests\Feature\Auth\PasswordUpdateTest
+  ✓ password can be updated                                              0.02s  
+  ✓ correct password must be provided to update password                 0.01s  
+
+   PASS  Tests\Feature\Auth\RegistrationTest
+  ✓ registration screen can be rendered                                  0.02s  
+  ✓ new users can register                                               0.01s  
+
+   PASS  Tests\Feature\BorrowerCatalogExtrasTest
+  ✓ availability and week calendar respect each role with data set "stu… 0.05s  
+  ✓ availability and week calendar respect each role with data set "fac… 0.03s  
+  ✓ availability and week calendar respect each role with data set "man… 0.03s  
+  ✓ availability and week calendar respect each role with data set "hea… 0.03s  
+  ✓ availability and week calendar respect each role with data set "aud… 0.01s  
+  ✓ glance uses current bookings and repairs not future or pending wind… 0.01s  
+  ✓ overdue checkout and current lab closure never show free now         0.01s  
+  ✓ calendar ignores invalid week and has full cross day dates           0.07s  
+  ✓ catalog global search finds equipment qr code                        0.02s  
+  ✓ mark all read is borrower only and preserves download timestamps wi… 0.02s  
+  ✓ mark all read is borrower only and preserves download timestamps wi… 0.02s  
+  ✓ mark all read is borrower only and preserves download timestamps wi… 0.01s  
+  ✓ mark all read is borrower only and preserves download timestamps wi… 0.01s  
+  ✓ mark all read is borrower only and preserves download timestamps wi… 0.02s  
+  ✓ mark all read requires every required download atomically and ignor… 0.03s  
+  ✓ mark all read has no get action and invalid equipment is not found   0.14s  
+  ✓ checklist progress counts filtered documents across all pages        0.04s  
+  ✓ catalog availability does not add queries per equipment              0.03s  
+  ✓ mark all read only changes required documents for this equipment     0.01s  
+  ✓ catalog and details show existing wishlist remove actions            0.03s  
+
+   PASS  Tests\Feature\CatalogDocumentFiltersTest
+  ✓ malformed catalog filters are ignored without hiding equipment       0.02s  
+  ✓ head does not see a document manager link they cannot open           0.02s  
+  ✓ equipment with history cannot be deleted                             0.01s  
+  ✓ catalog filters and management visibility for each role with data s… 0.03s  
+  ✓ catalog filters and management visibility for each role with data s… 0.02s  
+  ✓ catalog filters and management visibility for each role with data s… 0.02s  
+  ✓ catalog filters and management visibility for each role with data s… 0.02s  
+  ✓ catalog filters and management visibility for each role with data s… 0.01s  
+  ✓ document manager and checklist filters enforce each role with data…  0.02s  
+  ✓ document manager and checklist filters enforce each role with data…  0.02s  
+  ✓ document manager and checklist filters enforce each role with data…  0.02s  
+  ✓ document manager and checklist filters enforce each role with data…  0.02s  
+  ✓ document manager and checklist filters enforce each role with data…  0.01s  
+  ✓ catalog sorting pagination and contextual empty states               0.05s  
+  ✓ catalog invalid scalar filters are ignored and selected values pers… 0.03s  
+  ✓ document filters sort paginate and ignore invalid values             0.03s  
+  ✓ checklist acknowledgement is personal and required filter preserves… 0.05s  
+  ✓ equipment with maintenance history cannot be deleted but unused equ… 0.02s  
+  ✓ delete preserves history and enforces role permissions with data se… 0.01s  
+  ✓ delete preserves history and enforces role permissions with data se… 0.01s  
+  ✓ delete preserves history and enforces role permissions with data se… 0.01s  
+  ✓ delete preserves history and enforces role permissions with data se… 0.02s  
+  ✓ delete preserves history and enforces role permissions with data se… 0.01s  
+  ✓ unfiltered empty catalog explains missing inventory                  0.01s  
+
+   PASS  Tests\Feature\CheckpointApiTest
+  ✓ request without a token gets 401                                     0.02s  
+  ✓ valid token without the right ability gets 403                       0.02s  
+  ✓ invalid code returns a stable 404 without debug fields               0.01s  
+  ✓ missing code does not bypass the ability check                       0.01s  
+  ✓ authorization endpoint reports the active checkout                   0.02s  
+  ✓ item that is not checked out is not authorized                       0.01s  
+  ✓ equipment list and active reservations match the expected structure  0.02s  
+  ✓ only auditors can log in for a token                                 0.01s  
+
+   PASS  Tests\Feature\ConcurrentApprovalTest
+  ✓ same equipment approvals serialize on two mysql connections          0.25s  
+
+   PASS  Tests\Feature\DemoSeederTest
+  ✓ rerunning the demo seeder does not duplicate or reset data           1.76s  
+
+   PASS  Tests\Feature\DepartmentReportExtrasTest
+  ✓ only heads can export and exports are department scoped with data s… 0.02s  
+  ✓ only heads can export and exports are department scoped with data s… 0.01s  
+  ✓ only heads can export and exports are department scoped with data s… 0.01s  
+  ✓ only heads can export and exports are department scoped with data s… 0.01s  
+  ✓ only heads can export and exports are department scoped with data s… 0.01s  
+  ✓ custom range clips and unions bookings for utilization and filters…  0.03s  
+  ✓ invalid or reversed ranges and array inputs use safe default         0.17s  
+  ✓ repair cost capture obeys existing role and scope rules with data s… 0.02s  
+  ✓ repair cost capture obeys existing role and scope rules with data s… 0.02s  
+  ✓ repair cost capture obeys existing role and scope rules with data s… 0.01s  
+  ✓ repair cost capture obeys existing role and scope rules with data s… 0.01s  
+  ✓ repair cost capture obeys existing role and scope rules with data s… 0.01s  
+  ✓ invalid repair costs are rejected and cross lab costs cannot be wri… 0.02s  
+  ✓ breakdown csv escapes formula fields and shows cost and borrower     0.02s  
+
+   PASS  Tests\Feature\DocumentComplianceTest
+  ✓ approval is blocked until required documents are acknowledged        0.02s  
+  ✓ handover is blocked until required documents are acknowledged        0.02s  
+  ✓ download is recorded and acknowledge needs a download first          0.02s  
+
+   PASS  Tests\Feature\DocumentUploadTest
+  ✓ valid pdf is stored on the private disk                              0.02s  
+  ✓ wrong file type is rejected                                          0.01s  
+  ✓ file over 5mb is rejected                                            0.01s  
+  ✓ manager of another lab cannot upload                                 0.01s  
+
+   PASS  Tests\Feature\EquipmentManagerToolsTest
+  ✓ tools and bulk labels are available only to managers and heads with… 0.03s  
+  ✓ tools and bulk labels are available only to managers and heads with… 0.02s  
+  ✓ tools and bulk labels are available only to managers and heads with… 0.01s  
+  ✓ tools and bulk labels are available only to managers and heads with… 0.01s  
+  ✓ tools and bulk labels are available only to managers and heads with… 0.01s  
+  ✓ only the own lab manager can clone without history or shared files…  0.01s  
+  ✓ only the own lab manager can clone without history or shared files…  0.02s  
+  ✓ only the own lab manager can clone without history or shared files…  0.01s  
+  ✓ only the own lab manager can clone without history or shared files…  0.01s  
+  ✓ only the own lab manager can clone without history or shared files…  0.01s  
+  ✓ csv import is manager only and uses the managers lab with data set…  0.01s  
+  ✓ csv import is manager only and uses the managers lab with data set…  0.01s  
+  ✓ csv import is manager only and uses the managers lab with data set…  0.01s  
+  ✓ csv import is manager only and uses the managers lab with data set…  0.01s  
+  ✓ csv import is manager only and uses the managers lab with data set…  0.01s  
+  ✓ manager cannot clone or download another labs equipment              0.03s  
+  ✓ head bulk outputs include only their department                      0.04s  
+  ✓ clone validates new name and unique serial                           0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.01s  
+  ✓ invalid csv reports errors and imports no partial rows with data se… 0.07s  
+  ✓ csv rejects existing serial oversize and wrong upload type           0.02s  
+  ✓ csv accepts bom reordered headers and quoted commas                  0.01s  
+  ✓ csv export neutralizes spreadsheet formulas in all cells             0.01s  
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.02s  
+
+   PASS  Tests\Feature\LabClosureManagementTest
+  ✓ closure management is scoped to managers and heads with data set #0  0.04s  
+  ✓ closure management is scoped to managers and heads with data set #1  0.03s  
+  ✓ closure management is scoped to managers and heads with data set #2  0.02s  
+  ✓ closure management is scoped to managers and heads with data set #3  0.02s  
+  ✓ closure management is scoped to managers and heads with data set #4  0.02s  
+  ✓ managers and heads cannot access foreign closures                    0.07s  
+  ✓ manager cannot schedule closures for another lab in the same depart… 0.02s  
+  ✓ closure rejects invalid dates missing reason and invalid lab         0.02s  
+  ✓ overlap scope allows back to back and matches only intersecting win… 0.01s  
+
+   PASS  Tests\Feature\MaintenanceDashboardQualityTest
+  ✓ maintenance filters keep role boundaries with data set #0            0.02s  
+  ✓ maintenance filters keep role boundaries with data set #1            0.02s  
+  ✓ maintenance filters keep role boundaries with data set #2            0.01s  
+  ✓ maintenance filters keep role boundaries with data set #3            0.01s  
+  ✓ maintenance filters keep role boundaries with data set #4            0.01s  
+  ✓ maintenance ignores invalid values and hides clear link without act… 0.02s  
+  ✓ maintenance sorting pagination and contextual empty state            0.04s  
+  ✓ role dashboard access and actions with data set #0                   0.02s  
+  ✓ role dashboard access and actions with data set #1                   0.02s  
+  ✓ role dashboard access and actions with data set #2                   0.01s  
+  ✓ role dashboard access and actions with data set #3                   0.02s  
+  ✓ role dashboard access and actions with data set #4                   0.01s  
+  ✓ borrower dashboard document progress excludes other borrowers and a… 0.02s  
+  ✓ manager dashboard counts due overdue and pending within own lab      0.02s  
+  ✓ department report is scoped for all roles                            0.03s  
+
+   PASS  Tests\Feature\NotificationsWishlistActivityTest
+  ✓ wishlist is borrower only and add remove are idempotent with data s… 0.02s  
+  ✓ wishlist is borrower only and add remove are idempotent with data s… 0.01s  
+  ✓ wishlist is borrower only and add remove are idempotent with data s… 0.02s  
+  ✓ wishlist is borrower only and add remove are idempotent with data s… 0.02s  
+  ✓ wishlist is borrower only and add remove are idempotent with data s… 0.01s  
+  ✓ notifications and mark read actions are owner scoped for all web ro… 0.02s  
+  ✓ notifications and mark read actions are owner scoped for all web ro… 0.02s  
+  ✓ notifications and mark read actions are owner scoped for all web ro… 0.02s  
+  ✓ notifications and mark read actions are owner scoped for all web ro… 0.04s  
+  ✓ notifications and mark read actions are owner scoped for all web ro… 0.02s  
+  ✓ visible activity never leaks outside own reservation lab or departm… 0.04s  
+  ✓ visible activity never leaks outside own reservation lab or departm… 0.02s  
+  ✓ visible activity never leaks outside own reservation lab or departm… 0.02s  
+  ✓ visible activity never leaks outside own reservation lab or departm… 0.02s  
+  ✓ visible activity never leaks outside own reservation lab or departm… 0.01s  
+  ✓ in app return reminders respect time boundaries and are not duplica… 0.04s  
+  ✓ wishlist waits for repair checkout and closure then sends once per…  0.02s  
+  ✓ checkout and return between scheduler ticks still notify wishlist s… 0.04s  
+  ✓ saved items and notifications are private and urls cannot redirect…  0.03s  
+  ✓ equipment deletion keeps visible manager and department audit histo… 0.02s  
+  ✓ approval and priority rejection record actor and reason in borrower… 0.02s  
+
+   PASS  Tests\Feature\ProfileTest
+  ✓ profile page is displayed                                            0.03s  
+  ✓ profile information can be updated                                   0.01s  
+  ✓ email verification status is unchanged when the email address is un… 0.01s  
+  ✓ user can delete their account                                        0.01s  
+  ✓ correct password must be provided to delete account                  0.01s  
+
+   PASS  Tests\Feature\QualityOfLifeIntegrationTest
+  ✓ closures cannot silently displace approved bookings and requests re… 0.03s  
+  ✓ updating closure into an approved window is rejected without moving… 0.01s  
+  ✓ unassigned management roles cannot read activity without an equipme… 0.01s  
+  ✓ clones and csv imports have visible actor attribution                0.02s  
+  ✓ head report date choices are remembered and invalid ranges are not…  0.03s  
+  ✓ reservation date guidance labels and uses the application timezone   0.01s  
+
+   PASS  Tests\Feature\ReservationConvenienceTest
+  ✓ reserve again is only for the owner borrower of a past terminal boo… 0.02s  
+  ✓ reserve again is only for the owner borrower of a past terminal boo… 0.01s  
+  ✓ reserve again is only for the owner borrower of a past terminal boo… 0.01s  
+  ✓ reserve again is only for the owner borrower of a past terminal boo… 0.01s  
+  ✓ reserve again is only for the owner borrower of a past terminal boo… 0.01s  
+  ✓ reserve again denies another owner and nonterminal booking           0.01s  
+  ✓ calendar export is approved only and authorized for each role with…  0.01s  
+  ✓ calendar export is approved only and authorized for each role with…  0.01s  
+  ✓ calendar export is approved only and authorized for each role with…  0.01s  
+  ✓ calendar export is approved only and authorized for each role with…  0.01s  
+  ✓ calendar export is approved only and authorized for each role with…  0.01s  
+  ✓ calendar escapes untrusted text uses utc and denies other borrowers  0.01s  
+  ✓ bulk actions and counter require a lab manager with data set "depar… 0.01s  
+  ✓ bulk actions and counter require a lab manager with data set "lab m… 0.03s  
+  ✓ bulk actions and counter require a lab manager with data set "stude… 0.01s  
+  ✓ bulk actions and counter require a lab manager with data set "facul… 0.01s  
+  ✓ bulk actions and counter require a lab manager with data set "secur… 0.01s  
+  ✓ bulk approval reports partial success and never bypasses compliance  0.02s  
+  ✓ foreign bulk selection aborts the whole batch and invalid input is…  0.02s  
+  ✓ counter finds own lab booking by code and never exposes another lab  0.02s  
+  ✓ return condition is manager only and damage creates linked maintena… 0.01s  
+  ✓ return condition is manager only and damage creates linked maintena… 0.01s  
+  ✓ return condition is manager only and damage creates linked maintena… 0.01s  
+  ✓ return condition is manager only and damage creates linked maintena… 0.01s  
+  ✓ return condition is manager only and damage creates linked maintena… 0.01s  
+  ✓ return requires notes for damage and good condition keeps existing…  0.02s  
+
+   PASS  Tests\Feature\ReservationDateUxTest
+  ✓ only borrowers can open the date picker with data set #0             0.02s  
+  ✓ only borrowers can open the date picker with data set #1             0.01s  
+  ✓ only borrowers can open the date picker with data set #2             0.01s  
+  ✓ only borrowers can open the date picker with data set #3             0.01s  
+  ✓ only borrowers can open the date picker with data set #4             0.01s  
+  ✓ reservation form preserves old dates and names both dates for cross… 0.01s  
+  ✓ invalid dates cannot bypass server validation for any role with dat… 0.01s  
+  ✓ invalid dates cannot bypass server validation for any role with dat… 0.01s  
+  ✓ invalid dates cannot bypass server validation for any role with dat… 0.01s  
+  ✓ invalid dates cannot bypass server validation for any role with dat… 0.01s  
+  ✓ invalid dates cannot bypass server validation for any role with dat… 0.01s  
+  ✓ cross day overlap message contains the conflicting full window       0.01s  
+
+   PASS  Tests\Feature\ReservationQualityOfLifeTest
+  ✓ reservation filter pages enforce each roles access with data set "d… 0.02s  
+  ✓ reservation filter pages enforce each roles access with data set "l… 0.02s  
+  ✓ reservation filter pages enforce each roles access with data set "s… 0.02s  
+  ✓ reservation filter pages enforce each roles access with data set "f… 0.02s  
+  ✓ reservation filter pages enforce each roles access with data set "s… 0.01s  
+  ✓ my reservations filters status keeps selection and never lists anot… 0.02s  
+  ✓ queue filters borrower status and overdue within the managers lab    0.02s  
+  ✓ invalid filter and sort values are ignored instead of breaking the…  0.02s  
+  ✓ sorting and pagination preserve valid filters                        0.02s  
+  ✓ empty states distinguish an empty account from active filters        0.03s  
+  ✓ queue names only the correct borrowers missing documents and disabl… 0.02s  
+  ✓ rejection reason can only be saved by the items manager with data s… 0.02s  
+  ✓ rejection reason can only be saved by the items manager with data s… 0.01s  
+  ✓ rejection reason can only be saved by the items manager with data s… 0.01s  
+  ✓ rejection reason can only be saved by the items manager with data s… 0.01s  
+  ✓ rejection reason can only be saved by the items manager with data s… 0.01s  
+  ✓ invalid rejection reason leaves the reservation pending              0.01s  
+  ✓ priority rejection stores a reason the student can read              0.03s  
+  ✓ timeline records each lifecycle actor and exact time                 0.03s  
+  ✓ timeline and rejection reason are scoped for all five roles with da… 0.02s  
+  ✓ timeline and rejection reason are scoped for all five roles with da… 0.02s  
+  ✓ timeline and rejection reason are scoped for all five roles with da… 0.02s  
+  ✓ timeline and rejection reason are scoped for all five roles with da… 0.02s  
+  ✓ timeline and rejection reason are scoped for all five roles with da… 0.02s  
+
+   PASS  Tests\Feature\ReservationRulesTest
+  ✓ item under repair cannot be reserved                                 0.02s  
+  ✓ overlapping request is rejected but back to back is allowed          0.02s  
+  ✓ pending reservations do not block the calendar                       0.01s  
+  ✓ rejects approval of an overlapping pending reservation               0.02s  
+  ✓ approval rechecks the status of a stale reservation                  0.01s  
+  ✓ faculty can reserve but security auditor cannot                      0.01s  
+  ✓ breakdown report flips status and resolving reopens the item         0.02s  
+
+   PASS  Tests\Feature\RoleRegressionTest
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.02s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.02s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.02s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.02s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "department…  0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.02s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.02s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.02s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.02s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "lab manager… 0.01s  
+  ✓ all five roles have expected page access with data set "student das… 0.01s  
+  ✓ all five roles have expected page access with data set "student pro… 0.01s  
+  ✓ all five roles have expected page access with data set "student doc… 0.02s  
+  ✓ all five roles have expected page access with data set "student equ… 0.02s  
+  ✓ all five roles have expected page access with data set "student equ… 0.01s  
+  ✓ all five roles have expected page access with data set "student res… 0.01s  
+  ✓ all five roles have expected page access with data set "student res… 0.01s  
+  ✓ all five roles have expected page access with data set "student mai… 0.01s  
+  ✓ all five roles have expected page access with data set "student dep… 0.01s  
+  ✓ all five roles have expected page access with data set "student dep… 0.01s  
+  ✓ all five roles have expected page access with data set "student equ… 0.02s  
+  ✓ all five roles have expected page access with data set "student equ… 0.01s  
+  ✓ all five roles have expected page access with data set "student doc… 0.01s  
+  ✓ all five roles have expected page access with data set "student res… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty das… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty pro… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty doc… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty equ… 0.02s  
+  ✓ all five roles have expected page access with data set "faculty equ… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty res… 0.04s  
+  ✓ all five roles have expected page access with data set "faculty res… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty mai… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty dep… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty dep… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty equ… 0.02s  
+  ✓ all five roles have expected page access with data set "faculty equ… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty doc… 0.01s  
+  ✓ all five roles have expected page access with data set "faculty res… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.02s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ all five roles have expected page access with data set "security au… 0.01s  
+  ✓ equipment creation requires management and valid input with data se… 0.01s  
+  ✓ equipment creation requires management and valid input with data se… 0.01s  
+  ✓ equipment creation requires management and valid input with data se… 0.01s  
+  ✓ equipment creation requires management and valid input with data se… 0.01s  
+  ✓ equipment creation requires management and valid input with data se… 0.02s  
+  ✓ reservation creation rejects bad dates and other roles with data se… 0.02s  
+  ✓ reservation creation rejects bad dates and other roles with data se… 0.01s  
+  ✓ reservation creation rejects bad dates and other roles with data se… 0.01s  
+  ✓ reservation creation rejects bad dates and other roles with data se… 0.01s  
+  ✓ reservation creation rejects bad dates and other roles with data se… 0.01s  
+  ✓ only own lab manager can approve valid request with data set "depar… 0.01s  
+  ✓ only own lab manager can approve valid request with data set "lab m… 0.02s  
+  ✓ only own lab manager can approve valid request with data set "stude… 0.01s  
+  ✓ only own lab manager can approve valid request with data set "facul… 0.01s  
+  ✓ only own lab manager can approve valid request with data set "secur… 0.01s  
+  ✓ head cannot assign an unknown role or foreign lab                    0.01s  
+  ✓ head can assign an unassigned student to own lab manager role        0.01s  
+  ✓ head cannot reassign another departments user or another head        0.02s  
+  ✓ uploads reject invalid types and oversized files without writing re… 0.02s  
+  ✓ pending request cannot be cancelled by another borrower              0.02s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.02s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.02s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ all roles have expected lifecycle action permissions with data set…  0.01s  
+  ✓ document download permissions for all roles with data set "departme… 0.01s  
+  ✓ document download permissions for all roles with data set "lab mana… 0.01s  
+  ✓ document download permissions for all roles with data set "student"  0.01s  
+  ✓ document download permissions for all roles with data set "faculty"  0.01s  
+  ✓ document download permissions for all roles with data set "security… 0.01s  
+
+   PASS  Tests\Feature\SeederRecoveryTest
+  ✓ seeder recovers missing related demo records without resetting edit… 1.93s  
+  ✓ legacy shared pdf records do not prevent demo top up                 1.85s  
+  ✓ seeded approved checked out and returned bookings have compliant do… 1.72s  
+  ✓ new demo reservations record ordered timeline actors and timestamps  1.50s  
+  ✓ a full legacy equipment catalog also receives missing related demo…  1.47s  
+
+   PASS  Tests\Feature\SharedUiTest
+  ✓ sidebar has only the roles navigation links with data set "student"  0.02s  
+  ✓ sidebar has only the roles navigation links with data set "faculty"  0.02s  
+  ✓ sidebar has only the roles navigation links with data set "manager"  0.02s  
+  ✓ sidebar has only the roles navigation links with data set "head"     0.02s  
+  ✓ auditor cannot render the equipment web interface                    0.01s  
+  ✓ success flash is accessible dismissible and keeps specific text      0.01s  
+  ✓ validation errors are announced and do not auto dismiss              0.01s  
+  ✓ forbidden and missing pages share a safe guest layout                0.01s  
+  ✓ all reservation lifecycle forms keep post method spoofing and confi… 0.03s  
+  ✓ auth pages keep guest layout and skip navigation                     0.02s  
+  ✓ pagination keeps filter links and disabled controls have visible na… 0.03s  
+  ✓ other global confirmation forms keep csrf and method fields          0.03s  
+
+   PASS  Tests\Feature\SystemCompletionTest
+  ✓ resolving the last breakdown keeps a checked out item reserved       0.02s  
+  ✓ head can see equipment and maintenance only in their department      0.03s  
+  ✓ equipment uses the public photo disk and validates uploads           0.02s  
+  ✓ qr label requires management permission                              0.04s  
+  ✓ private documents have no public file and require an authorized dow… 0.02s  
+  ✓ reservation timeline is scoped and displays the recorded steps       0.03s  
+  ✓ priority displaces only overlapping pending student requests         0.02s  
+  ✓ priority leaves all requests alone when a blocking booking exists    0.03s  
+
+   PASS  Tests\Feature\WorkspacePreferencesTest
+  ✓ preferences are persisted for each web role and auditors are denied… 0.02s  
+  ✓ preferences are persisted for each web role and auditors are denied… 0.02s  
+  ✓ preferences are persisted for each web role and auditors are denied… 0.02s  
+  ✓ preferences are persisted for each web role and auditors are denied… 0.02s  
+  ✓ preferences are persisted for each web role and auditors are denied… 0.01s  
+  ✓ invalid preference input does not change a users settings with data… 0.01s  
+  ✓ invalid preference input does not change a users settings with data… 0.02s  
+  ✓ invalid preference input does not change a users settings with data… 0.01s  
+  ✓ invalid preference input does not change a users settings with data… 0.01s  
+  ✓ invalid preference input does not change a users settings with data… 0.01s  
+  ✓ a guest cannot change preferences                                    0.01s  
+  ✓ list filters and sort are remembered and clear resets them           0.03s  
+  ✓ preferences do not leak between users and invalid filters are never… 0.03s  
+  ✓ pagination restores choices and back links preserve local filter ur… 0.04s  
+  ✓ disabling remembering clears choices without resetting theme         0.02s  
+  ✓ back links ignore nonlocal session paths                             0.02s  
+
+  Tests:    439 passed (5526 assertions)
+  Duration: 19.26s
+

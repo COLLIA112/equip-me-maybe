@@ -118,3 +118,7 @@ Run the full suite and production build after each logical task. A passing build
 - [Checkpoint API and exact Postman requests](docs/API.md)
 - [Postman collection](docs/Equip-Me-Maybe.postman_collection.json)
 - [Manual checks and demo script](docs/DEMO.md)
+
+## Additional improvements and verification
+
+See [ADDITIONAL_FEATURES.md](docs/ADDITIONAL_FEATURES.md) for the borrower, manager, head and shared additions, role restrictions, scheduler setup, browser runner and target-device checks. Executed release summaries are recorded in [TEST_RESULTS.md](docs/TEST_RESULTS.md).

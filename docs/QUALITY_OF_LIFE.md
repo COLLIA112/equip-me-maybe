@@ -1,6 +1,6 @@
 # Original quality-of-life phases: implementation and verification guide
 
-This document covers the original Phase 0–9 request. The later wishlist, calendar-grid, bulk actions, notifications, CSV, dark-mode and similar additions are a separate follow-up scope; they must be verified separately when implemented. Existing reservation, compliance, repair and department/lab authorization rules remain the foundation.
+This document covers the original Phase 0–9 request. The wishlist, calendar-grid, bulk actions, notifications, CSV, dark-mode and similar additions were implemented afterward and have separate coverage in [ADDITIONAL_FEATURES.md](ADDITIONAL_FEATURES.md) and release evidence in [TEST_RESULTS.md](TEST_RESULTS.md). Existing reservation, compliance, repair and department/lab authorization rules remain the foundation.
 
 ## Verification record
 
