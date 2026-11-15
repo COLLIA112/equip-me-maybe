@@ -1,0 +1,19 @@
+{
+  "zip_integrity": "passed",
+  "runtime": "PHP8.2.35",
+  "fresh_setup": "passed",
+  "repeat_setup": "passed",
+  "environment_key_preserved": true,
+  "edited_user_preserved": true,
+  "seed_counts": {
+    "departments": 3,
+    "labs": 12,
+    "users": 120,
+    "tags": 15,
+    "equipment": 250,
+    "documents": 400,
+    "reservations": 600,
+    "maintenance_logs": 80
+  },
+  "packaged_phpunit_exit_code": 0
+}
