@@ -10,7 +10,7 @@
         @foreach (['sort', 'direction', 'overdue'] as $key)
             @if (isset($filters[$key]))<input type="hidden" name="{{ $key }}" value="{{ $filters[$key] }}">@endif
         @endforeach
-        @if ($activeFilters)<a href="{{ route('reservations.index') }}" class="rounded-md px-3 py-2 text-sm font-semibold text-blue-700 underline">Clear filter</a>@endif
+        @if ($activeFilters)<a href="{{ route('reservations.index', ['clear' => 1]) }}" class="rounded-md px-3 py-2 text-sm font-semibold text-blue-700 underline">Clear filter</a>@endif
     </form>
     <p class="mb-3 text-sm text-slate-600">Showing {{ $reservations->firstItem() ?? 0 }}–{{ $reservations->lastItem() ?? 0 }} of {{ $reservations->total() }}</p>
     <x-card role="region" aria-label="Reservations table" tabindex="0" class="responsive-table p-0">
@@ -35,7 +35,9 @@
                         @if ($r->rejection_reason)<p class="mt-2 max-w-sm text-sm text-slate-700">{{ $r->rejection_reason }}</p>@endif
                     </td>
                     <td class="px-4 py-3">{{ $r->equipment->lab->name }}</td>
-                    <td class="px-4 py-3 text-right">
+                    <td class="px-4 py-3 text-right space-y-2">
+                        @if ($r->canReserveAgain(auth()->user()))<a class="block text-blue-700 underline" href="{{ route('reservations.again', $r) }}">Reserve again</a>@endif
+                        @if ($r->status === \App\Enums\ReservationStatus::Approved)<a class="block text-blue-700 underline" href="{{ route('reservations.calendar', $r) }}">Add to calendar (.ics)</a>@endif
                         @can('cancel', $r)
                             <form method="POST" action="{{ route('reservations.cancel', $r) }}" data-confirm="Cancel this reservation?">
                                 @csrf @method('PATCH')

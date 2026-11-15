@@ -18,13 +18,24 @@
         @foreach (['sort', 'direction'] as $key)
             @if (isset($filters[$key]))<input type="hidden" name="{{ $key }}" value="{{ $filters[$key] }}">@endif
         @endforeach
-        @if ($activeFilters)<a href="{{ route('reservations.queue') }}" class="rounded-md px-3 py-2 text-sm font-semibold text-blue-700 underline">Clear filter</a>@endif
+        @if ($activeFilters)<a href="{{ route('reservations.queue', ['clear' => 1]) }}" class="rounded-md px-3 py-2 text-sm font-semibold text-blue-700 underline">Clear filter</a>@endif
     </form>
+    <div class="mb-5 flex flex-wrap gap-3">
+        <a href="{{ route('reservations.counter') }}" class="font-semibold text-blue-700 underline">Open handover and return counter</a>
+    </div>
+    <form id="bulk-reservations" method="POST" action="{{ route('reservations.bulk') }}" data-confirm="Apply this action to the selected pending reservations?" class="mb-4 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
+        @csrf
+        <div><label for="bulk-action" class="block text-sm font-medium">Selected pending requests</label><select name="action" id="bulk-action" class="rounded-md border-slate-300 text-sm"><option value="approve">Approve selected</option><option value="reject">Reject selected</option></select></div>
+        <div><label for="bulk-reason" class="block text-sm font-medium">Rejection reason (optional)</label><input name="rejection_reason" id="bulk-reason" maxlength="1000" class="rounded-md border-slate-300 text-sm"></div>
+        <button class="rounded bg-blue-700 px-4 py-2 text-sm text-white">Apply to selected (maximum 50)</button>
+    </form>
+    @if (session('bulk_result.errors'))<div role="status" class="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><p class="font-semibold">Some selected requests could not be changed:</p><ul class="list-disc pl-5">@foreach (session('bulk_result.errors') as $id => $messages)<li>Reservation #{{ $id }}: {{ implode(' ', $messages) }}</li>@endforeach</ul></div>@endif
     <p class="mb-3 text-sm text-slate-600">Showing {{ $reservations->firstItem() ?? 0 }}–{{ $reservations->lastItem() ?? 0 }} of {{ $reservations->total() }}</p>
     <x-card role="region" aria-label="Reservation queue table" tabindex="0" class="responsive-table p-0">
         <table class="min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-slate-500">
                 <tr>
+                    <th class="px-3 py-3"><span class="sr-only">Select pending request</span></th>
                     @foreach (['equipment' => 'Equipment', 'borrower' => 'Borrower', 'starts_at' => 'Window', 'status' => 'Status'] as $key => $label)
                         <th class="px-4 py-3" @if (($filters['sort'] ?? 'starts_at') === $key) aria-sort="{{ ($filters['direction'] ?? 'asc') === 'asc' ? 'ascending' : 'descending' }}" @endif>
                             <a class="underline" href="{{ request()->fullUrlWithQuery(['sort' => $key, 'direction' => ($filters['sort'] ?? 'starts_at') === $key && ($filters['direction'] ?? 'asc') === 'asc' ? 'desc' : 'asc', 'page' => null]) }}">{{ $label }}</a>
@@ -37,6 +48,7 @@
             @forelse ($reservations as $r)
                 @php $ok = $compliance[$r->id] ?? false; $missing = $missingDocuments[$r->id] ?? []; @endphp
                 <tr class="border-t align-top">
+                    <td class="px-3 py-3">@if ($r->status === \App\Enums\ReservationStatus::Pending)<input type="checkbox" form="bulk-reservations" name="reservation_ids[]" value="{{ $r->id }}" aria-label="Select reservation {{ $r->id }}" class="rounded border-slate-400">@endif</td>
                     <td class="px-4 py-3 font-medium"><a class="text-blue-700 hover:underline" href="{{ route('reservations.show', $r) }}">{{ $r->equipment->name }}</a>
                         @if ($r->is_class_session)<p class="text-xs text-slate-600">Faculty class session</p>@endif
                     </td>
@@ -62,6 +74,7 @@
                                     <button @disabled(! $ok) aria-describedby="compliance-{{ $r->id }}" class="rounded bg-blue-600 px-3 py-1 text-white disabled:cursor-not-allowed disabled:opacity-40">Hand over</button></form>
                             @elseif ($r->status === \App\Enums\ReservationStatus::CheckedOut)
                                 <form method="POST" action="{{ route('reservations.return', $r) }}" data-confirm="Record this item as returned?">@csrf @method('PATCH')
+                                    @include('reservations._return-condition')
                                     <button class="rounded bg-slate-700 px-3 py-1 text-white">Receive return</button></form>
                             @else
                                 <a class="text-blue-700 underline" href="{{ route('reservations.show', $r) }}">View details</a>
@@ -70,7 +83,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="p-4"><x-empty-state>{{ $activeFilters ? 'No reservations match your filters.' : 'No open reservations for your lab.' }}</x-empty-state></td></tr>
+                <tr><td colspan="7" class="p-4"><x-empty-state>{{ $activeFilters ? 'No reservations match your filters.' : 'No open reservations for your lab.' }}</x-empty-state></td></tr>
             @endforelse
             </tbody>
         </table>

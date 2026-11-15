@@ -32,6 +32,9 @@
             </dl>
             @if ($reservation->rejection_reason)<p role="note" class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-800"><strong>Rejection reason:</strong> {{ $reservation->rejection_reason }}</p>@endif
             @if ($reservation->isOverdue())<p class="mt-3 font-semibold text-red-800">Overdue</p>@endif
+            @if ($reservation->canReserveAgain(auth()->user()))<a class="mt-4 block font-semibold text-blue-700 underline" href="{{ route('reservations.again', $reservation) }}">Reserve again</a>@endif
+            @if ($reservation->status === \App\Enums\ReservationStatus::Approved)<a class="mt-3 block text-blue-700 underline" href="{{ route('reservations.calendar', $reservation) }}">Add to calendar (.ics)</a>@endif
+            @if ($reservation->return_condition)<p class="mt-4 text-sm"><strong>Return condition:</strong> {{ ucfirst(str_replace('_', ' ', $reservation->return_condition)) }}@if ($reservation->return_notes) — {{ $reservation->return_notes }}@endif</p>@endif
             <a class="mt-5 inline-block text-sm font-semibold text-blue-700 hover:underline" href="{{ route('equipment.show', $reservation->equipment) }}">View equipment</a>
         </x-card>
         <x-card>

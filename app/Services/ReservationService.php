@@ -7,6 +7,9 @@ use App\Enums\ReservationStatus;
 use App\Enums\Role;
 use App\Models\Document;
 use App\Models\Equipment;
+use App\Models\Lab;
+use App\Models\LabClosure;
+use App\Models\MaintenanceLog;
 use App\Models\Reservation;
 use App\Models\User;
 use Carbon\CarbonInterface;
@@ -40,27 +43,33 @@ class ReservationService
             $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
 
             $this->assertNotUnderRepair($equipment);
+            $this->assertLabOpen($equipment, $start, $end);
             $this->assertNoConflict($equipment, $start, $end);
 
             if ($isClassSession) {
-                $equipment->reservations()
-                    ->overlapping($start, $end)
-                    ->where('status', ReservationStatus::Pending)
-                    ->whereHas('user', fn ($query) => $query->where('role', Role::Student))
-                    ->update([
+                $displaced = $equipment->reservations()
+                    ->overlapping($start, $end)->where('status', ReservationStatus::Pending)
+                    ->whereHas('user', fn ($query) => $query->where('role', Role::Student))->get();
+                foreach ($displaced as $pending) {
+                    $pending->update([
                         'status' => ReservationStatus::Rejected,
                         'rejection_reason' => self::FACULTY_PRIORITY_REASON,
                         'rejected_at' => now(),
                     ]);
+                    $this->recordChange('rejected', null, $equipment, $pending, ['reason' => self::FACULTY_PRIORITY_REASON]);
+                }
             }
 
-            return $equipment->reservations()->create([
+            $reservation = $equipment->reservations()->create([
                 'user_id' => $user->id,
                 'starts_at' => $start,
                 'ends_at' => $end,
                 'status' => ReservationStatus::Pending,
                 'is_class_session' => $isClassSession,
             ]);
+            $this->recordChange('requested', $user, $equipment, $reservation);
+
+            return $reservation;
         });
     }
 
@@ -75,6 +84,7 @@ class ReservationService
 
             $this->assertNotUnderRepair($equipment);
             $this->assertCompliant($reservation);
+            $this->assertLabOpen($equipment, $reservation->starts_at, $reservation->ends_at);
             $this->assertNoConflict($equipment, $reservation->starts_at, $reservation->ends_at, $reservation->id);
 
             $reservation->update([
@@ -83,6 +93,8 @@ class ReservationService
                 'approved_at' => now(),
             ]);
 
+            $this->recordChange('approved', $approver, $equipment, $reservation);
+
             return $reservation;
         });
     }
@@ -90,7 +102,7 @@ class ReservationService
     public function reject(Reservation $reservation, ?string $reason = null, ?User $actor = null): Reservation
     {
         return DB::transaction(function () use ($reservation, $reason, $actor) {
-            Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Pending);
             $reservation->update([
@@ -100,6 +112,8 @@ class ReservationService
                 'rejected_at' => now(),
             ]);
 
+            $this->recordChange('rejected', $actor, $equipment, $reservation);
+
             return $reservation;
         });
     }
@@ -107,7 +121,7 @@ class ReservationService
     public function cancel(Reservation $reservation, ?User $actor = null): Reservation
     {
         return DB::transaction(function () use ($reservation, $actor) {
-            Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
 
             if (! in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Approved], true)) {
@@ -119,6 +133,8 @@ class ReservationService
                 'cancelled_by' => $actor?->id,
                 'cancelled_at' => now(),
             ]);
+
+            $this->recordChange('cancelled', $actor, $equipment, $reservation);
 
             return $reservation;
         });
@@ -141,22 +157,39 @@ class ReservationService
             ]);
             $equipment->update(['status' => EquipmentStatus::Reserved]);
 
+            $this->recordChange('checked_out', $actor, $equipment, $reservation);
+
             return $reservation;
         });
     }
 
-    public function markReturned(Reservation $reservation, ?User $actor = null): Reservation
+    public function markReturned(Reservation $reservation, ?User $actor = null, string $condition = 'good', ?string $notes = null): Reservation
     {
-        return DB::transaction(function () use ($reservation, $actor) {
+        return DB::transaction(function () use ($reservation, $actor, $condition, $notes) {
             $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::CheckedOut);
+            if (! in_array($condition, ['good', 'damaged', 'missing_parts'], true)
+                || ($condition !== 'good' && (! $actor || ! filled($notes)))) {
+                throw ValidationException::withMessages(['return_notes' => 'Record the damage or missing parts before returning this item.']);
+            }
 
             $reservation->update([
                 'status' => ReservationStatus::Returned,
                 'returned_at' => now(),
                 'returned_by' => $actor?->id,
+                'return_condition' => $condition,
+                'return_notes' => filled($notes) ? trim($notes) : null,
             ]);
+
+            if ($condition !== 'good') {
+                MaintenanceLog::create([
+                    'equipment_id' => $equipment->id, 'reservation_id' => $reservation->id,
+                    'reported_by' => $actor->id,
+                    'issue' => ($condition === 'damaged' ? 'Damage on return: ' : 'Missing parts on return: ').trim($notes),
+                ]);
+                $equipment->update(['status' => EquipmentStatus::UnderRepair]);
+            }
 
             // Back to available, unless it was flagged for repair in the meantime.
             if ($equipment->status !== EquipmentStatus::UnderRepair) {
@@ -166,6 +199,8 @@ class ReservationService
                         : EquipmentStatus::Available,
                 ]);
             }
+
+            $this->recordChange('returned', $actor, $equipment, $reservation, ['condition' => $condition]);
 
             return $reservation;
         });
@@ -232,6 +267,26 @@ class ReservationService
     }
 
     // ---------- assertions ----------
+
+    private function recordChange(string $event, ?User $actor, Equipment $equipment, Reservation $reservation, array $details = []): void
+    {
+        app(ActivityRecorder::class)->record($event, $actor, $equipment, $reservation, $details);
+        app(ReservationNotifier::class)->changed($reservation, $event);
+        if (in_array($event, ['approved', 'checked_out', 'returned', 'cancelled'], true)) {
+            AvailabilityNotifier::notify($equipment);
+        }
+    }
+
+    private function assertLabOpen(Equipment $equipment, CarbonInterface $start, CarbonInterface $end): void
+    {
+        // Closure writes take the same lab lock. Use a current read after waiting on it.
+        Lab::whereKey($equipment->lab_id)->lockForUpdate()->firstOrFail();
+        $closure = LabClosure::query()->where('lab_id', $equipment->lab_id)
+            ->where('starts_at', '<', $end)->where('ends_at', '>', $start)->orderBy('starts_at')->lockForUpdate()->first();
+        if ($closure) {
+            throw ValidationException::withMessages(['starts_at' => 'This lab is unavailable from '.$closure->starts_at->format('M j, Y g:i A').' to '.$closure->ends_at->format('M j, Y g:i A').': '.$closure->reason]);
+        }
+    }
 
     private function assertNotUnderRepair(Equipment $equipment): void
     {

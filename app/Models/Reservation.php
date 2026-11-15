@@ -18,6 +18,7 @@ class Reservation extends Model
         'status', 'handed_over_at', 'returned_at', 'is_class_session',
         'rejection_reason', 'approved_at', 'handed_over_by', 'returned_by',
         'rejected_by', 'rejected_at', 'cancelled_by', 'cancelled_at',
+        'return_condition', 'return_notes',
     ];
 
     protected function casts(): array
@@ -68,6 +69,13 @@ class Reservation extends Model
     public function canceller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function canReserveAgain(User $user): bool
+    {
+        return $user->isBorrower() && $this->user_id === $user->id
+            && in_array($this->status, [ReservationStatus::Returned, ReservationStatus::Rejected, ReservationStatus::Cancelled], true)
+            && $this->ends_at->isPast();
     }
 
     public function isOverdue(): bool

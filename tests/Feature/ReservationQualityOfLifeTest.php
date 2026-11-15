@@ -60,6 +60,7 @@ class ReservationQualityOfLifeTest extends TestCase
         $this->actingAs($student)->get(route('reservations.index', ['status' => 'approved']))->assertOk()
             ->assertViewHas('reservations', fn ($rows) => $rows->total() === 1 && $rows->first()->id === $approved->id)
             ->assertSee('value="approved" selected', false)->assertSee('Showing 1–1 of 1')->assertSee('Clear filter');
+        $this->get(route('reservations.index', ['clear' => 1]))->assertRedirect(route('reservations.index'));
         $this->get(route('reservations.index'))->assertOk()->assertDontSee('Clear filter');
     }
 

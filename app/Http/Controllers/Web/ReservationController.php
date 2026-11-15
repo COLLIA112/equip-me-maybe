@@ -5,17 +5,22 @@ namespace App\Http\Controllers\Web;
 use App\Enums\ReservationStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CounterLookupRequest;
 use App\Http\Requests\RejectReservationRequest;
+use App\Http\Requests\ReservationBulkRequest;
 use App\Http\Requests\ReservationFilterRequest;
+use App\Http\Requests\ReturnReservationRequest;
 use App\Http\Requests\StoreReservationRequest;
 use App\Models\Equipment;
 use App\Models\Reservation;
 use App\Models\User;
 use App\Services\ReservationService;
+use App\Support\ReservationCalendar;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class ReservationController extends Controller
 {
@@ -128,13 +133,89 @@ class ReservationController extends Controller
         return back()->with('status', 'Reservation #'.$reservation->id.': item handed over.');
     }
 
-    public function return(Request $request, Reservation $reservation): RedirectResponse
+    public function return(ReturnReservationRequest $request, Reservation $reservation): RedirectResponse
     {
         $this->authorize('manage', $reservation);
 
-        $this->service->markReturned($reservation, $request->user());
+        $this->service->markReturned($reservation, $request->user(), $request->validated('return_condition') ?? 'good', $request->validated('return_notes'));
 
         return back()->with('status', 'Reservation #'.$reservation->id.': item returned.');
+    }
+
+    public function again(Request $request, Reservation $reservation)
+    {
+        abort_unless($reservation->canReserveAgain($request->user()), 403);
+        $equipment = $reservation->equipment;
+        $booked = $equipment->reservations()->blocking()->where('ends_at', '>', now())->orderBy('starts_at')->get(['starts_at', 'ends_at']);
+        $start = now()->addDay()->startOfHour();
+        $duration = max(60, min(86400, $reservation->starts_at->diffInSeconds($reservation->ends_at)));
+        $prefill = ['starts_at' => $start->format('Y-m-d\TH:i'), 'ends_at' => $start->copy()->addSeconds($duration)->format('Y-m-d\TH:i')];
+
+        return view('reservations.create', compact('equipment', 'booked', 'prefill'));
+    }
+
+    public function calendar(Reservation $reservation, ReservationCalendar $calendar)
+    {
+        $this->authorize('view', $reservation);
+        abort_unless($reservation->status === ReservationStatus::Approved, 403);
+        $reservation->load(['equipment.lab', 'user']);
+
+        return response($calendar->render($reservation), 200, [
+            'Content-Type' => 'text/calendar; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="reservation-'.$reservation->id.'.ics"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function bulk(ReservationBulkRequest $request)
+    {
+        $rows = Reservation::query()->with('equipment')->whereKey($request->validated('reservation_ids'))->orderBy('id')->get();
+        // Authorize every selected record before changing any record in the batch.
+        foreach ($rows as $reservation) {
+            $this->authorize('manage', $reservation);
+        }
+        $result = ['succeeded' => 0, 'failed' => 0, 'errors' => []];
+        foreach ($rows as $reservation) {
+            try {
+                if ($request->validated('action') === 'approve') {
+                    $this->service->approve($reservation, $request->user());
+                } else {
+                    $this->service->reject($reservation, $request->validated('rejection_reason'), $request->user());
+                }
+                $result['succeeded']++;
+            } catch (ValidationException $exception) {
+                $result['failed']++;
+                $result['errors'][$reservation->id] = collect($exception->errors())->flatten()->all();
+            }
+        }
+        if ($request->expectsJson()) {
+            return response()->json($result);
+        }
+
+        return back()->with('status', 'Bulk '.$request->validated('action').': '.$result['succeeded'].' succeeded, '.$result['failed'].' skipped.')->with('bulk_result', $result);
+    }
+
+    public function counter(CounterLookupRequest $request)
+    {
+        $code = $request->validated('code');
+        $reservations = collect();
+        if (filled($code)) {
+            $reservations = Reservation::query()->with(['equipment', 'user'])
+                ->whereHas('equipment', fn ($query) => $query->where('lab_id', $request->user()->lab_id))
+                ->whereIn('status', [ReservationStatus::Approved, ReservationStatus::CheckedOut])
+                ->when(ctype_digit(ltrim($code, '#')),
+                    fn ($query) => $query->whereKey((int) ltrim($code, '#')),
+                    fn ($query) => $query->whereHas('equipment', fn ($item) => $item->where('qr_code', strtoupper($code))))
+                ->orderBy('starts_at')->limit(20)->get();
+        }
+        $missingDocuments = $this->service->missingDocumentMap($reservations);
+
+        return view('reservations.counter', compact('reservations', 'code', 'missingDocuments'));
+    }
+
+    public function counterLookup(CounterLookupRequest $request): RedirectResponse
+    {
+        return redirect()->route('reservations.counter', ['code' => $request->validated('code')]);
     }
 
     private function sort(Builder $query, array $filters, string $defaultDirection = 'asc'): void

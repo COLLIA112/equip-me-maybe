@@ -1,18 +1,18 @@
 <x-app-layout>
-    <x-slot name="header"><h1 class="page-title">Reserve {{ $equipment->name }}</h1></x-slot>
+    <x-slot name="header"><h1 class="page-title">{{ isset($prefill) ? "Reserve again: " : "Reserve " }}{{ $equipment->name }}</h1></x-slot>
     <div class="grid gap-6 lg:grid-cols-2">
         <x-card>
-            <form method="POST" action="{{ route('reservations.store', $equipment) }}" class="space-y-4" data-reservation-dates>
+            <form method="POST" action="{{ route('reservations.store', $equipment) }}" class="space-y-4" data-reservation-dates data-reservation-timezone="{{ config('app.timezone') }}">
                 @csrf
                 <div>
                     <label for="starts_at" class="block text-sm font-medium">Start</label>
-                    <input type="datetime-local" id="starts_at" name="starts_at" value="{{ old('starts_at') }}" min="{{ now()->addMinute()->startOfMinute()->format('Y-m-d\TH:i') }}" aria-describedby="reservation-date-help reservation-conflict" required class="mt-1 min-w-0 max-w-full w-full rounded-md border-slate-300 text-sm">
+                    <input type="datetime-local" id="starts_at" name="starts_at" value="{{ old('starts_at', $prefill['starts_at'] ?? '') }}" min="{{ now()->addMinute()->startOfMinute()->format('Y-m-d\TH:i') }}" aria-describedby="reservation-date-help reservation-conflict" required class="mt-1 min-w-0 max-w-full w-full rounded-md border-slate-300 text-sm">
                 </div>
                 <div>
                     <label for="ends_at" class="block text-sm font-medium">End</label>
-                    <input type="datetime-local" id="ends_at" name="ends_at" value="{{ old('ends_at') }}" min="{{ now()->addMinute()->startOfMinute()->format('Y-m-d\TH:i') }}" aria-describedby="reservation-date-help reservation-conflict" required class="mt-1 min-w-0 max-w-full w-full rounded-md border-slate-300 text-sm">
+                    <input type="datetime-local" id="ends_at" name="ends_at" value="{{ old('ends_at', $prefill['ends_at'] ?? '') }}" min="{{ now()->addMinute()->startOfMinute()->format('Y-m-d\TH:i') }}" aria-describedby="reservation-date-help reservation-conflict" required class="mt-1 min-w-0 max-w-full w-full rounded-md border-slate-300 text-sm">
                 </div>
-                <p id="reservation-date-help" class="text-sm text-slate-600">End defaults to one hour after start. Reservation times are checked again when you submit.</p>
+                <p id="reservation-date-help" class="text-sm text-slate-600">Times are shown in {{ config('app.timezone') }}. End defaults to one hour after start. Reservation times are checked again when you submit.</p>
                 <p id="reservation-conflict" role="status" aria-live="polite" class="hidden rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"></p>
                 @php $bookingWindows = $booked->map(fn ($booking) => ['start' => $booking->starts_at->format('Y-m-d\TH:i'), 'end' => $booking->ends_at->format('Y-m-d\TH:i'), 'label' => $booking->starts_at->format('M j, Y g:i A').' to '.$booking->ends_at->format('M j, Y g:i A')])->values(); @endphp
                 <script type="application/json" data-booked-windows>@json($bookingWindows)</script>
