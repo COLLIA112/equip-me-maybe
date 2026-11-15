@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Web;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CatalogFilterRequest;
+use App\Http\Requests\EquipmentCalendarRequest;
 use App\Http\Requests\EquipmentRequest;
 use App\Models\Department;
 use App\Models\Equipment;
 use App\Models\Lab;
 use App\Models\Tag;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -28,7 +31,7 @@ class EquipmentController extends Controller
 
         $equipment = Equipment::query()
             ->when($isHead, fn ($query) => $query->whereHas('lab', fn ($lab) => $lab->where('department_id', $user->department_id)))
-            ->with(['lab.department', 'tags'])
+            ->with(['lab.department', 'tags'])->withAvailability()
             ->filter($request->only(['q', 'department_id', 'lab_id', 'status', 'tag']))
             ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
             ->orderBy('id')
@@ -43,14 +46,21 @@ class EquipmentController extends Controller
             'filters' => $request->only(['q', 'department_id', 'lab_id', 'status', 'tag']),
             'sort' => $request->input('sort', 'name'),
             'direction' => $request->input('direction', 'asc'),
+            'wishlistIds' => $user->isBorrower() ? $user->wishlist()->pluck('equipment.id')->all() : [],
         ]);
     }
 
-    public function show(Request $request, Equipment $equipment)
+    public function show(EquipmentCalendarRequest $request, Equipment $equipment)
     {
         $this->authorize('view', $equipment);
 
-        $equipment->load(['lab.department', 'tags', 'documents']);
+        $equipment = Equipment::query()->withAvailability()
+            ->with(['lab.department', 'tags', 'documents'])->findOrFail($equipment->id);
+        $week = Carbon::parse($request->input('week', now()->toDateString()))->startOfWeek(Carbon::MONDAY);
+        $weekBookings = $equipment->reservations()->blocking()
+            ->where('starts_at', '<', $week->copy()->addWeek())
+            ->where('ends_at', '>', $week)->orderBy('starts_at')
+            ->get(['id', 'starts_at', 'ends_at', 'status']);
 
         // Free slot picker: upcoming booked windows only (no borrower names).
         $booked = $equipment->reservations()
@@ -65,7 +75,9 @@ class EquipmentController extends Controller
             ->get()
             ->keyBy('id');
 
-        return view('equipment.show', compact('equipment', 'booked', 'progress'));
+        $wishlisted = $request->user()->isBorrower() && $request->user()->wishlist()->whereKey($equipment->id)->exists();
+
+        return view('equipment.show', compact('equipment', 'booked', 'progress', 'week', 'weekBookings', 'wishlisted'));
     }
 
     public function qrLabel(Equipment $equipment)
@@ -102,6 +114,7 @@ class EquipmentController extends Controller
             'photo_path' => $request->file('photo')?->store('equipment', 'public'),
         ]);
         $equipment->tags()->sync($request->input('tags', []));
+        ActivityRecorder::record('equipment.created', $user, $equipment, details: ['name' => $equipment->name, 'serial_number' => $equipment->serial_number]);
 
         return redirect()->route('equipment.show', $equipment)->with('status', 'Equipment added.');
     }
@@ -131,21 +144,23 @@ class EquipmentController extends Controller
 
         $equipment->update($data);
         $equipment->tags()->sync($request->input('tags', []));
+        ActivityRecorder::record('equipment.updated', $request->user(), $equipment, details: ['name' => $equipment->name, 'serial_number' => $equipment->serial_number]);
 
         return redirect()->route('equipment.show', $equipment)->with('status', 'Equipment updated.');
     }
 
-    public function destroy(Equipment $equipment): RedirectResponse
+    public function destroy(Request $request, Equipment $equipment): RedirectResponse
     {
         $this->authorize('delete', $equipment);
 
-        DB::transaction(function () use ($equipment) {
+        DB::transaction(function () use ($equipment, $request) {
             $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
             if ($equipment->reservations()->exists() || $equipment->maintenanceLogs()->exists()) {
                 throw ValidationException::withMessages([
                     'equipment' => 'Equipment with reservation or maintenance history cannot be deleted. Keep this record for audit history.',
                 ]);
             }
+            ActivityRecorder::record('equipment.deleted', $request->user(), $equipment, details: ['name' => $equipment->name, 'serial_number' => $equipment->serial_number]);
             $equipment->delete();
         });
 

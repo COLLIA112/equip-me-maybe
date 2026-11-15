@@ -3,6 +3,13 @@
         <div class="flex flex-wrap items-center justify-between gap-2">
             <h1 class="page-title">{{ $equipment->name }}</h1>
             <div class="flex flex-wrap gap-2">
+                @if (auth()->user()->isBorrower())
+                    <form method="POST" action="{{ route($wishlisted ? 'wishlist.destroy' : 'wishlist.store', $equipment) }}">
+                        @csrf
+                        @if ($wishlisted) @method('DELETE') @endif
+                        <button class="rounded-md border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700">{{ $wishlisted ? 'Remove from wishlist' : 'Save to wishlist' }}</button>
+                    </form>
+                @endif
                 @can('reserve_equipment')
                     @if ($equipment->status->blocksReservation())
                         <span class="rounded-md bg-slate-200 px-3 py-2 text-sm text-slate-500">Under repair, cannot reserve</span>
@@ -26,6 +33,7 @@
                 <img src="{{ $equipment->photo_url }}" alt="{{ $equipment->name }}" class="mb-4 max-h-72 w-full rounded-md object-cover">
             @endif
             <dl class="grid grid-cols-2 gap-3 text-sm">
+                <div><dt class="text-slate-500">Available now</dt><dd><x-availability-glance :equipment="$equipment" /></dd></div>
                 <div><dt class="text-slate-500">Status</dt><dd><x-badge :status="$equipment->status" /></dd></div>
                 <div><dt class="text-slate-500">Serial number</dt><dd>{{ $equipment->serial_number }}</dd></div>
                 <div><dt class="text-slate-500">Lab</dt><dd>{{ $equipment->lab->name }}</dd></div>
@@ -47,7 +55,7 @@
         <x-card>
             <h2 class="mb-2 font-medium">Booked windows</h2>
             @forelse ($booked as $b)
-                <p class="border-t first:border-t-0 py-1.5 text-sm">{{ $b->starts_at->format('M j, g:i A') }} to {{ $b->ends_at->format('g:i A') }}</p>
+                <p class="border-t first:border-t-0 py-1.5 text-sm">{{ $b->starts_at->format('M j, Y g:i A') }} to {{ $b->ends_at->format('M j, Y g:i A') }}</p>
             @empty
                 <x-empty-state>No upcoming bookings.</x-empty-state>
             @endforelse
@@ -55,6 +63,22 @@
 
         <x-card class="lg:col-span-3">
             <h2 class="mb-3 font-medium">Documents</h2>
+            @if (auth()->user()->isBorrower())
+                @php
+                    $required = $equipment->documents->where('is_required', true);
+                    $missingDownloads = $required->filter(fn ($document) => ! $progress->get($document->id)?->pivot?->downloaded_at);
+                    $readCount = $required->filter(fn ($document) => $progress->get($document->id)?->pivot?->acknowledged_at)->count();
+                @endphp
+                @if ($required->isNotEmpty())
+                    <p class="mb-2 text-sm">{{ $readCount }} of {{ $required->count() }} required documents acknowledged</p>
+                    <progress class="mb-3 h-3 w-full accent-blue-700" value="{{ $readCount }}" max="{{ $required->count() }}" aria-label="Required document acknowledgement progress">{{ $readCount }} of {{ $required->count() }}</progress>
+                    <form method="POST" action="{{ route('equipment.documents.acknowledge-all', $equipment) }}" class="mb-4">
+                        @csrf
+                        <button @disabled($missingDownloads->isNotEmpty() || $readCount === $required->count()) aria-describedby="download-required-reason" class="rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">Mark all as read</button>
+                        <p id="download-required-reason" class="mt-2 text-sm text-slate-600">{{ $missingDownloads->isNotEmpty() ? 'Download every required PDF first: '.$missingDownloads->pluck('title')->implode(', ').'.' : ($readCount === $required->count() ? 'All required documents are acknowledged.' : 'All required PDFs have been downloaded. Confirm you have read them before marking all as read.') }}</p>
+                    </form>
+                @endif
+            @endif
             @forelse ($equipment->documents as $doc)
                 @php $pivot = $progress->get($doc->id)?->pivot; @endphp
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t first:border-t-0 py-2 text-sm">
@@ -77,4 +101,5 @@
             @endforelse
         </x-card>
     </div>
+    <x-equipment-week-calendar :equipment="$equipment" :week="$week" :bookings="$weekBookings" />
 </x-app-layout>

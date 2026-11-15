@@ -17,7 +17,7 @@
         </x-card>
         <x-card class="lg:col-span-2">
             <h2 class="mb-3 font-medium">Library</h2>
-            <x-document-filters :filters="$filters" :sort="$sort" :direction="$direction" :clear-url="route('documents.index', $equipment)" />
+            <x-document-filters :filters="$filters" :sort="$sort" :direction="$direction" :clear-url="route('documents.index', [$equipment, 'clear' => 1])" />
             <x-list-summary :paginator="$documents" />
             @forelse ($documents as $doc)
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t first:border-t-0 py-2 text-sm">
