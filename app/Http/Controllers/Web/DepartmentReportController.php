@@ -44,7 +44,10 @@ class DepartmentReportController extends Controller
             ->limit(5)
             ->get();
 
-        return view('department.index', compact('department', 'mostReserved', 'underRepair', 'recentMaintenance'));
+        $reservationTotal = $department->labs->sum('reservations_count');
+        $breakdownTotal = MaintenanceLog::whereHas('equipment.lab', fn ($query) => $query->where('department_id', $department->id))->count();
+
+        return view('department.index', compact('department', 'mostReserved', 'underRepair', 'recentMaintenance', 'reservationTotal', 'breakdownTotal'));
     }
 
     /** Breakdown History per equipment. */
@@ -55,7 +58,7 @@ class DepartmentReportController extends Controller
         $logs = $equipment->maintenanceLogs()
             ->with(['reporter', 'reservation.user'])
             ->latest()
-            ->paginate(15);
+            ->paginate(15)->withQueryString();
 
         return view('department.breakdowns', compact('equipment', 'logs'));
     }

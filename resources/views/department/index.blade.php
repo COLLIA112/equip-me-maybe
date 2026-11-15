@@ -1,10 +1,12 @@
 <x-app-layout>
     <x-slot name="header"><h1 class="page-title">{{ $department->name }} department</h1></x-slot>
 
-    <div class="grid gap-4 sm:grid-cols-3">
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <x-card><p class="text-sm text-slate-500">Labs</p><p class="text-3xl font-semibold">{{ $department->labs->count() }}</p></x-card>
         <x-card><p class="text-sm text-slate-500">Equipment items</p><p class="text-3xl font-semibold">{{ $department->equipment_count }}</p></x-card>
         <x-card><p class="text-sm text-slate-500">Under repair</p><p class="text-3xl font-semibold text-red-600">{{ $underRepair->count() }}</p></x-card>
+        <x-card><p class="text-sm text-slate-500">Total reservations</p><p class="text-3xl font-semibold">{{ $reservationTotal }}</p></x-card>
+        <x-card><p class="text-sm text-slate-500">Recorded breakdowns</p><p class="text-3xl font-semibold">{{ $breakdownTotal }}</p></x-card>
     </div>
 
     <x-card class="mt-5">

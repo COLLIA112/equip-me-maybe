@@ -6,12 +6,6 @@
         </div>
     </x-slot>
 
-    @if ($role === \App\Enums\Role::SecurityAuditor)
-        <x-card>
-            <h2 class="text-lg font-bold">Checkpoint access</h2>
-            <p class="mt-2 text-sm text-slate-700">Use the checkpoint API to look up an equipment code or see current checkouts. Request a token with <code>POST /api/login</code>.</p>
-        </x-card>
-    @else
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             @foreach ($stats as $label => $value)
                 <x-card><p class="stat-label">{{ $label }}</p><p class="stat-number">{{ $value }}</p></x-card>
@@ -30,7 +24,10 @@
                                 <p class="break-words text-slate-600">{{ $reservation->user->name }}</p>
                             @endif
                         </div>
-                        <x-badge :status="$reservation->status" />
+                        <div class="flex flex-wrap gap-2"><x-badge :status="$reservation->status" />
+                        @if($reservation->status === \App\Enums\ReservationStatus::CheckedOut && $reservation->ends_at->isPast())
+                            <span class="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">Overdue</span>
+                        @endif</div>
                     </div>
                 @empty
                     <x-empty-state>There is no reservation activity yet.</x-empty-state>
@@ -44,6 +41,8 @@
                         <li><a class="hover:underline" href="{{ route('reservations.index') }}">My reservations</a></li>
                         <li><a class="hover:underline" href="{{ route('documents.checklist') }}">Required documents</a></li>
                     @else
+                        <li><a class="hover:underline" href="{{ route('reservations.queue', ['status' => 'pending']) }}">Requests needing approval</a></li>
+                        <li><a class="hover:underline" href="{{ route('reservations.queue', ['overdue' => 1]) }}">Overdue returns</a></li>
                         <li><a class="hover:underline" href="{{ route('reservations.queue') }}">Open reservation queue</a></li>
                         <li><a class="hover:underline" href="{{ route('equipment.create') }}">Add equipment</a></li>
                         <li><a class="hover:underline" href="{{ route('maintenance.index') }}">Report a breakdown</a></li>
@@ -51,6 +50,38 @@
                 </ul>
             </x-card>
         </div>
+        @if (auth()->user()->isBorrower())
+            <x-card class="mt-5">
+                <h2 class="text-lg font-bold">Documents still to acknowledge</h2>
+                <p class="mt-2 text-sm text-slate-700">{{ $documentAcknowledged }} of {{ $documentTotal }} acknowledged</p>
+                <progress class="mt-2 h-3 w-full accent-blue-700" value="{{ $documentAcknowledged }}" max="{{ max(1, $documentTotal) }}" aria-label="Required document acknowledgement progress">{{ $documentAcknowledged }} of {{ $documentTotal }}</progress>
+                @forelse($pendingDocuments as $document)
+                    <p class="mt-2 text-sm"><a class="font-semibold text-blue-700 underline" href="{{ route('documents.checklist') }}">{{ $document->title }}</a> <span class="text-slate-600">for {{ $document->equipment->name }}</span></p>
+                @empty
+                    <p class="mt-2 text-sm text-green-800">All required documents for your open reservations are acknowledged.</p>
+                @endforelse
+                <a class="mt-3 inline-block text-sm font-semibold text-blue-700 underline" href="{{ route('documents.checklist') }}">Open document checklist</a>
+            </x-card>
+            <div class="mt-5 grid gap-5 lg:grid-cols-2">
+                <x-card>
+                    <h2 class="text-lg font-bold">Upcoming reservations</h2>
+                    @forelse($upcoming as $reservation)
+                        <p class="mt-3 text-sm"><a class="font-semibold text-blue-700 underline" href="{{ route('reservations.show', $reservation) }}">{{ $reservation->equipment->name }}</a><br>{{ $reservation->starts_at->format('M j, Y g:i A') }}</p>
+                    @empty
+                        <x-empty-state>You have no upcoming approved reservations.</x-empty-state>
+                    @endforelse
+                </x-card>
+                <x-card>
+                    <h2 class="text-lg font-bold">Active checkouts</h2>
+                    @forelse($active as $reservation)
+                        <p class="mt-3 text-sm"><a class="font-semibold text-blue-700 underline" href="{{ route('reservations.show', $reservation) }}">{{ $reservation->equipment->name }}</a><br>Due {{ $reservation->ends_at->format('M j, Y g:i A') }}
+                        @if($reservation->ends_at->isPast())<span class="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">Overdue</span>@endif</p>
+                    @empty
+                        <x-empty-state>You have no active checkouts.</x-empty-state>
+                    @endforelse
+                </x-card>
+            </div>
+        @endif
         @if ($role === \App\Enums\Role::LabManager)
             <x-card class="mt-5">
                 <h2 class="mb-3 text-lg font-bold">Recent maintenance</h2>
@@ -67,5 +98,5 @@
                 @endforelse
             </x-card>
         @endif
-    @endif
+
 </x-app-layout>

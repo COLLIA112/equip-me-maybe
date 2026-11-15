@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header"><h1 class="page-title">Breakdown history: {{ $equipment->name }}</h1></x-slot>
+    <x-list-summary :paginator="$logs" />
     <x-card role="region" aria-label="Breakdown history table" tabindex="0" class="responsive-table p-0">
         <table class="min-w-full text-sm">
             <thead class="bg-slate-50 text-left text-slate-500"><tr><th class="px-4 py-3">Reported</th><th class="px-4 py-3">Issue</th><th class="px-4 py-3">Reported by</th><th class="px-4 py-3">Borrower of record</th><th class="px-4 py-3">Resolved</th></tr></thead>
