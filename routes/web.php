@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'));
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\RequireWebRole::class])->group(function () {
     // ----- account (Breeze) -----
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     // ----- shared pages -----
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/equipment', [EquipmentController::class, 'index'])->name('equipment.index');
+    Route::resource('tags', \App\Http\Controllers\Web\TagAdminController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
 
     // ----- lab manager and department head: equipment CRUD (policy decides the record) -----
     Route::middleware('can:manage_equipment')->group(function () {
@@ -65,6 +67,8 @@ Route::middleware('auth')->group(function () {
 
     // ----- department head -----
     Route::middleware('can:view_department_reports')->prefix('department')->name('department.')->group(function () {
+        Route::resource('labs', \App\Http\Controllers\Web\LabAdminController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
         Route::get('/', [DepartmentReportController::class, 'index'])->name('index');
         Route::get('/equipment/{equipment}/breakdowns', [DepartmentReportController::class, 'breakdowns'])->name('breakdowns');
         Route::get('/users', [UserRoleController::class, 'index'])->name('users');

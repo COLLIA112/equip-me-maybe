@@ -30,5 +30,6 @@
             </tbody>
         </table>
     </x-card>
+    <x-list-summary :paginator="$users" />
     <div class="mt-4">{{ $users->links() }}</div>
 </x-app-layout>
