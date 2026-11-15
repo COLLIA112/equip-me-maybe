@@ -12,7 +12,9 @@
                 @endcan
                 @can('update', $equipment)
                     <a href="{{ route('equipment.edit', $equipment) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Edit</a>
-                    <a href="{{ route('documents.index', $equipment) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Documents</a>
+                    @can('create', [\App\Models\Document::class, $equipment])
+                        <a href="{{ route('documents.index', $equipment) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Documents</a>
+                    @endcan
                 @endcan
             </div>
         </div>
@@ -38,7 +40,7 @@
                     </dd>
                 </div>
                 <div><dt class="text-slate-500">Tags</dt>
-                    <dd class="flex flex-wrap gap-1">@forelse ($equipment->tags as $tag)<span class="rounded bg-slate-100 px-2 py-0.5 text-xs">{{ $tag->name }}</span>@empty<span class="text-slate-400">None</span>@endforelse</dd></div>
+                    <dd class="flex flex-wrap gap-1">@forelse ($equipment->tags as $tag)<span class="rounded bg-slate-100 px-2 py-0.5 text-xs">{{ $tag->name }}</span>@empty<span class="text-slate-600">None</span>@endforelse</dd></div>
             </dl>
         </x-card>
 

@@ -1,6 +1,8 @@
 <x-app-layout>
     <x-slot name="header"><h1 class="page-title">Required documents</h1></x-slot>
     <p class="mb-4 text-sm text-slate-600">Download each document first, then acknowledge it. Your lab manager cannot approve or hand over equipment until this is done.</p>
+    <x-document-filters :filters="$filters" :sort="$sort" :direction="$direction" :clear-url="route('documents.checklist')" :checklist="true" />
+    <x-list-summary :paginator="$documents" />
     <div class="space-y-3">
         @forelse ($documents as $doc)
             @php $pivot = $doc->users->first()?->pivot; @endphp
@@ -22,7 +24,8 @@
                 </div>
             </x-card>
         @empty
-            <x-empty-state>No required documents for your open reservations.</x-empty-state>
+            <x-empty-state>{{ count($filters) ? 'No documents match your filters for your open reservations. Clear the filters to view your required checklist.' : 'No required documents for your open reservations.' }}</x-empty-state>
         @endforelse
     </div>
+    <div class="mt-4">{{ $documents->links() }}</div>
 </x-app-layout>

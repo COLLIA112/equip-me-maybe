@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CatalogFilterRequest;
 use App\Http\Requests\EquipmentRequest;
 use App\Models\Department;
 use App\Models\Equipment;
@@ -11,12 +12,14 @@ use App\Models\Lab;
 use App\Models\Tag;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class EquipmentController extends Controller
 {
     /** Catalog with search and filters by department, lab, status and tag. */
-    public function index(Request $request)
+    public function index(CatalogFilterRequest $request)
     {
         $this->authorize('viewAny', Equipment::class);
 
@@ -27,7 +30,8 @@ class EquipmentController extends Controller
             ->when($isHead, fn ($query) => $query->whereHas('lab', fn ($lab) => $lab->where('department_id', $user->department_id)))
             ->with(['lab.department', 'tags'])
             ->filter($request->only(['q', 'department_id', 'lab_id', 'status', 'tag']))
-            ->orderBy('name')
+            ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
+            ->orderBy('id')
             ->paginate(12)
             ->withQueryString();
 
@@ -37,6 +41,8 @@ class EquipmentController extends Controller
             'labs' => Lab::when($isHead, fn ($query) => $query->where('department_id', $user->department_id))->orderBy('name')->get(),
             'tags' => Tag::orderBy('name')->get(),
             'filters' => $request->only(['q', 'department_id', 'lab_id', 'status', 'tag']),
+            'sort' => $request->input('sort', 'name'),
+            'direction' => $request->input('direction', 'asc'),
         ]);
     }
 
@@ -133,7 +139,15 @@ class EquipmentController extends Controller
     {
         $this->authorize('delete', $equipment);
 
-        $equipment->delete();
+        DB::transaction(function () use ($equipment) {
+            $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
+            if ($equipment->reservations()->exists() || $equipment->maintenanceLogs()->exists()) {
+                throw ValidationException::withMessages([
+                    'equipment' => 'Equipment with reservation or maintenance history cannot be deleted. Keep this record for audit history.',
+                ]);
+            }
+            $equipment->delete();
+        });
 
         return redirect()->route('equipment.index')->with('status', 'Equipment deleted.');
     }

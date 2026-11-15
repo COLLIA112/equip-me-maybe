@@ -17,7 +17,9 @@
         </x-card>
         <x-card class="lg:col-span-2">
             <h2 class="mb-3 font-medium">Library</h2>
-            @forelse ($equipment->documents as $doc)
+            <x-document-filters :filters="$filters" :sort="$sort" :direction="$direction" :clear-url="route('documents.index', $equipment)" />
+            <x-list-summary :paginator="$documents" />
+            @forelse ($documents as $doc)
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t first:border-t-0 py-2 text-sm">
                     <div>
                         <p class="font-medium">{{ $doc->title }}
@@ -32,8 +34,9 @@
                     </div>
                 </div>
             @empty
-                <x-empty-state>No documents yet.</x-empty-state>
+                <x-empty-state>{{ count($filters) ? 'No documents match your filters. Clear the filters to see the full library.' : 'No documents have been uploaded for this equipment yet.' }}</x-empty-state>
             @endforelse
+            <div class="mt-4">{{ $documents->links() }}</div>
         </x-card>
     </div>
 </x-app-layout>
