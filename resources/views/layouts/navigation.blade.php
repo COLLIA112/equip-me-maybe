@@ -17,25 +17,29 @@
         $links[] = ['Reservation Queue', route('reservations.queue'), 'reservations.queue'];
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
     }
+    if ($isManager || $isHead) {
+        $links[] = ['Tags', route('tags.index'), 'tags.*'];
+    }
     if ($isHead) {
         $links[] = ['Department', route('department.index'), 'department.index|department.breakdowns'];
         $links[] = ['Users and Roles', route('department.users'), 'department.users'];
+        $links[] = ['Laboratories', route('department.labs.index'), 'department.labs.*'];
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
     }
 @endphp
-<aside class="bg-[#10223f] text-white print:hidden"
+<aside class="min-w-0 bg-[#10223f] text-white print:hidden"
        x-data="{ open: false }"
        @keydown.escape="if (open) { open = false; $refs.menu.focus() }">
     <div class="flex min-h-16 items-center justify-between gap-2 px-4 lg:hidden">
         <a class="font-bold tracking-tight" href="{{ route('dashboard') }}">Equip Me Maybe</a>
-        <button type="button" x-ref="menu" @click="open = !open" :aria-expanded="open.toString()"
+        <button type="button" x-ref="menu" @click="open = !open" aria-expanded="false" :aria-expanded="open.toString()" :aria-label="open ? 'Close navigation' : 'Open navigation'"
                 aria-controls="workspace-navigation" class="rounded-md border border-slate-500 px-3 py-2 text-sm">Menu</button>
     </div>
     <div id="workspace-navigation" class="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/10 p-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:border-t-0"
          :class="open ? 'block' : 'hidden'" x-cloak>
         <a class="mb-8 hidden px-2 pt-3 text-xl font-bold tracking-tight lg:block" href="{{ route('dashboard') }}">Equip Me Maybe</a>
 
-        <nav aria-label="Main navigation" class="space-y-1">
+        <nav aria-label="Main navigation" class="space-y-1" @click="if ($event.target.closest('a')) open = false">
             @foreach ($links as [$label, $url, $pattern])
                 @php $active = request()->routeIs(...explode('|', $pattern)); @endphp
                 <a href="{{ $url }}" @if ($active) aria-current="page" @endif

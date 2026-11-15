@@ -12,12 +12,13 @@
     @endif
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 antialiased">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:p-3">Skip to content</a>
     <div class="grid min-h-screen lg:grid-cols-[minmax(18rem,2fr)_3fr]">
         <header class="flex flex-col justify-between gap-8 bg-[#10223f] p-6 text-white lg:p-12">
             <a href="/" class="w-fit text-lg font-bold tracking-tight">Equip Me Maybe</a>
             <p class="hidden max-w-sm text-3xl font-semibold leading-tight lg:block">University laboratory equipment reservations</p>
         </header>
-        <main class="mx-auto flex w-full max-w-lg items-center p-4 py-8 sm:p-8">
+        <main id="main-content" tabindex="-1" class="mx-auto flex min-w-0 w-full max-w-lg items-center p-4 py-8 sm:p-8">
             <div class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">{{ $slot }}</div>
         </main>
     </div>

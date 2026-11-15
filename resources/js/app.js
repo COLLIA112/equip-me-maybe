@@ -1,14 +1,18 @@
 import './bootstrap';
+import './qol';
+import './reservation-dates';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
 Alpine.data('confirmation', () => ({
+    dialog: null,
     form: null,
     submitter: null,
     message: '',
 
     init() {
+        this.dialog = this.$el;
         document.addEventListener('submit', (event) => this.handleSubmit(event));
         window.addEventListener('pageshow', () => {
             document.querySelectorAll('form[data-submitting]').forEach((form) => {
@@ -38,7 +42,7 @@ Alpine.data('confirmation', () => ({
             this.form = form;
             this.submitter = event.submitter;
             this.message = form.dataset.confirm;
-            this.$el.showModal();
+            this.dialog.showModal();
             return;
         }
         delete form.dataset.confirmed;
@@ -54,14 +58,14 @@ Alpine.data('confirmation', () => ({
 
     confirm() {
         const { form, submitter } = this;
-        this.$el.close();
+        this.dialog.close();
         form.dataset.confirmed = 'true';
         form.requestSubmit(submitter ?? undefined);
         delete form.dataset.confirmed;
     },
 
     cancel() {
-        this.$el.close();
+        this.dialog.close();
     },
 
     reset() {
