@@ -29,6 +29,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'preferences' => 'array',
         ];
     }
 
@@ -67,6 +68,13 @@ class User extends Authenticatable
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    /** Saved equipment; availability notifications never change booking priority. */
+    public function wishlist(): BelongsToMany
+    {
+        return $this->belongsToMany(Equipment::class, 'wishlists')
+            ->withPivot(['id', 'notified_at', 'availability_cycle'])->withTimestamps();
     }
 
     /** Many to Many with compliance data on the pivot. */
