@@ -1,6 +1,8 @@
 import './bootstrap';
 import './qol';
 import './reservation-dates';
+import './shell';
+import './counter-scanner';
 import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;

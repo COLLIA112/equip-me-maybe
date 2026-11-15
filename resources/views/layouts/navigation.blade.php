@@ -12,13 +12,17 @@
     if ($u->isBorrower()) {
         $links[] = ['My Reservations', route('reservations.index'), 'reservations.index|reservations.show'];
         $links[] = ['Required Documents', route('documents.checklist'), 'documents.checklist'];
+        if (Route::has('wishlist.index')) $links[] = ['Wishlist', route('wishlist.index'), 'wishlist.*'];
     }
     if ($isManager) {
         $links[] = ['Reservation Queue', route('reservations.queue'), 'reservations.queue'];
+        if (Route::has('reservations.counter')) $links[] = ['Handover counter', route('reservations.counter'), 'reservations.counter*'];
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
     }
     if ($isManager || $isHead) {
         $links[] = ['Tags', route('tags.index'), 'tags.*'];
+        if (Route::has('equipment.tools.index')) $links[] = ['Equipment tools', route('equipment.tools.index'), 'equipment.tools.*'];
+        if (Route::has('lab-closures.index')) $links[] = ['Lab closures', route('lab-closures.index'), 'lab-closures.*'];
     }
     if ($isHead) {
         $links[] = ['Department', route('department.index'), 'department.index|department.breakdowns'];
@@ -26,6 +30,7 @@
         $links[] = ['Laboratories', route('department.labs.index'), 'department.labs.*'];
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
     }
+    if (Route::has('activities.index')) $links[] = ['Activity history', route('activities.index'), 'activities.*'];
 @endphp
 <aside class="min-w-0 bg-[#10223f] text-white print:hidden"
        x-data="{ open: false }"
@@ -48,6 +53,7 @@
         </nav>
 
         <div class="mt-5 border-t border-white/15 pt-4 lg:mt-auto">
+            <div role="img" class="mb-2 ml-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 text-sm font-bold text-white" aria-label="{{ $u->name }} initials avatar">{{ collect(preg_split('/\s+/u', trim($u->name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') }}</div>
             <p class="break-words px-3 text-sm font-semibold">{{ $u->name }}</p>
             <p class="px-3 pb-2 text-xs text-slate-300">{{ $u->role->label() }}</p>
             <a href="{{ route('profile.edit') }}" @if (request()->routeIs('profile.*')) aria-current="page" @endif
