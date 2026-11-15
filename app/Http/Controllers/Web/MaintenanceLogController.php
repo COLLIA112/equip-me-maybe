@@ -9,7 +9,10 @@ use App\Http\Requests\MaintenanceFilterRequest;
 use App\Http\Requests\StoreMaintenanceLogRequest;
 use App\Models\Equipment;
 use App\Models\MaintenanceLog;
+use App\Services\ActivityRecorder;
+use App\Services\AvailabilityNotifier;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MaintenanceLogController extends Controller
@@ -54,24 +57,27 @@ class MaintenanceLogController extends Controller
             // The borrower of record: whoever has it checked out right now.
             $active = $equipment->currentCheckout();
 
-            $equipment->maintenanceLogs()->create([
+            $log = $equipment->maintenanceLogs()->create([
                 'reservation_id' => $active?->id,
                 'reported_by' => $request->user()->id,
                 'issue' => $request->input('issue'),
+                'repair_cost' => $request->validated('repair_cost'),
             ]);
 
             $equipment->update(['status' => EquipmentStatus::UnderRepair]);
+            ActivityRecorder::record('maintenance.reported', $request->user(), $equipment, $active, ['maintenance_log_id' => $log->id, 'repair_cost' => $log->repair_cost]);
+            AvailabilityNotifier::notify($equipment);
         });
 
         return back()->with('status', 'Breakdown logged. Item is now under repair.');
     }
 
-    public function resolve(MaintenanceLog $log): RedirectResponse
+    public function resolve(Request $request, MaintenanceLog $log): RedirectResponse
     {
         $equipment = $log->equipment;
         $this->authorize('update', $equipment);
 
-        DB::transaction(function () use ($log, $equipment) {
+        DB::transaction(function () use ($log, $equipment, $request) {
             $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
             $log->refresh();
             if ($log->resolved_at !== null) {
@@ -79,6 +85,7 @@ class MaintenanceLogController extends Controller
             }
 
             $log->update(['resolved_at' => now()]);
+            ActivityRecorder::record('maintenance.resolved', $request->user(), $equipment, null, ['maintenance_log_id' => $log->id, 'repair_cost' => $log->repair_cost]);
 
             if (! $equipment->maintenanceLogs()->whereNull('resolved_at')->exists()) {
                 $equipment->update([
@@ -86,6 +93,7 @@ class MaintenanceLogController extends Controller
                         ? EquipmentStatus::Reserved
                         : EquipmentStatus::Available,
                 ]);
+                AvailabilityNotifier::notify($equipment);
             }
         });
 
