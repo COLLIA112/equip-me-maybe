@@ -22,6 +22,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ReservationService
 {
+    public const FACULTY_PRIORITY_REASON = 'An overlapping faculty class session received priority over this pending student request.';
+
     // ---------- lifecycle ----------
 
     public function request(
@@ -45,7 +47,11 @@ class ReservationService
                     ->overlapping($start, $end)
                     ->where('status', ReservationStatus::Pending)
                     ->whereHas('user', fn ($query) => $query->where('role', Role::Student))
-                    ->update(['status' => ReservationStatus::Rejected]);
+                    ->update([
+                        'status' => ReservationStatus::Rejected,
+                        'rejection_reason' => self::FACULTY_PRIORITY_REASON,
+                        'rejected_at' => now(),
+                    ]);
             }
 
             return $equipment->reservations()->create([
@@ -74,27 +80,33 @@ class ReservationService
             $reservation->update([
                 'status' => ReservationStatus::Approved,
                 'approved_by' => $approver->id,
+                'approved_at' => now(),
             ]);
 
             return $reservation;
         });
     }
 
-    public function reject(Reservation $reservation): Reservation
+    public function reject(Reservation $reservation, ?string $reason = null, ?User $actor = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $reason, $actor) {
             Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Pending);
-            $reservation->update(['status' => ReservationStatus::Rejected]);
+            $reservation->update([
+                'status' => ReservationStatus::Rejected,
+                'rejection_reason' => filled($reason) ? trim($reason) : null,
+                'rejected_by' => $actor?->id,
+                'rejected_at' => now(),
+            ]);
 
             return $reservation;
         });
     }
 
-    public function cancel(Reservation $reservation): Reservation
+    public function cancel(Reservation $reservation, ?User $actor = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $actor) {
             Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
 
@@ -102,15 +114,19 @@ class ReservationService
                 throw ValidationException::withMessages(['status' => 'Only pending or approved reservations can be cancelled.']);
             }
 
-            $reservation->update(['status' => ReservationStatus::Cancelled]);
+            $reservation->update([
+                'status' => ReservationStatus::Cancelled,
+                'cancelled_by' => $actor?->id,
+                'cancelled_at' => now(),
+            ]);
 
             return $reservation;
         });
     }
 
-    public function handOver(Reservation $reservation): Reservation
+    public function handOver(Reservation $reservation, ?User $actor = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $actor) {
             $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Approved);
@@ -121,6 +137,7 @@ class ReservationService
             $reservation->update([
                 'status' => ReservationStatus::CheckedOut,
                 'handed_over_at' => now(),
+                'handed_over_by' => $actor?->id,
             ]);
             $equipment->update(['status' => EquipmentStatus::Reserved]);
 
@@ -128,9 +145,9 @@ class ReservationService
         });
     }
 
-    public function markReturned(Reservation $reservation): Reservation
+    public function markReturned(Reservation $reservation, ?User $actor = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $actor) {
             $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::CheckedOut);
@@ -138,6 +155,7 @@ class ReservationService
             $reservation->update([
                 'status' => ReservationStatus::Returned,
                 'returned_at' => now(),
+                'returned_by' => $actor?->id,
             ]);
 
             // Back to available, unless it was flagged for repair in the meantime.
@@ -184,9 +202,16 @@ class ReservationService
      */
     public function complianceMap(Collection $reservations): array
     {
+        return array_map(fn (array $titles) => $titles === [], $this->missingDocumentMap($reservations));
+    }
+
+    /** Missing document titles for a whole page, using two queries rather than one per row. */
+    public function missingDocumentMap(Collection $reservations): array
+    {
         $required = Document::whereIn('equipment_id', $reservations->pluck('equipment_id')->unique())
             ->where('is_required', true)
-            ->get(['id', 'equipment_id'])
+            ->orderBy('title')
+            ->get(['id', 'equipment_id', 'title'])
             ->groupBy('equipment_id');
 
         $acknowledged = DB::table('document_user')
@@ -196,11 +221,13 @@ class ReservationService
             ->groupBy('user_id')
             ->map(fn ($rows) => $rows->pluck('document_id'));
 
-        return $reservations->mapWithKeys(function (Reservation $r) use ($required, $acknowledged) {
-            $needed = ($required[$r->equipment_id] ?? collect())->pluck('id');
-            $have = $acknowledged[$r->user_id] ?? collect();
+        return $reservations->mapWithKeys(function (Reservation $reservation) use ($required, $acknowledged) {
+            $have = $acknowledged[$reservation->user_id] ?? collect();
+            $missing = ($required[$reservation->equipment_id] ?? collect())
+                ->reject(fn (Document $document) => $have->contains($document->id))
+                ->pluck('title')->all();
 
-            return [$r->id => $needed->diff($have)->isEmpty()];
+            return [$reservation->id => $missing];
         })->all();
     }
 

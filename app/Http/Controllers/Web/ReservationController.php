@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Web;
 use App\Enums\ReservationStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RejectReservationRequest;
+use App\Http\Requests\ReservationFilterRequest;
 use App\Http\Requests\StoreReservationRequest;
 use App\Models\Equipment;
 use App\Models\Reservation;
+use App\Models\User;
 use App\Services\ReservationService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -18,23 +22,25 @@ class ReservationController extends Controller
     public function __construct(private ReservationService $service) {}
 
     /** My Reservations (student and faculty). */
-    public function index(Request $request)
+    public function index(ReservationFilterRequest $request)
     {
         $this->authorize('create', Reservation::class);
+        $filters = $request->filters();
+        $query = $request->user()->reservations()->with('equipment.lab')
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['overdue'] ?? false, fn ($query) => $query->checkedOut()->where('ends_at', '<', now()));
+        $this->sort($query->getQuery(), $filters, 'desc');
+        $reservations = $query->paginate(10)->withQueryString();
+        $activeFilters = filled($filters['status'] ?? null) || filled($filters['overdue'] ?? null);
 
-        $reservations = $request->user()->reservations()
-            ->with('equipment.lab')
-            ->latest('starts_at')
-            ->paginate(10);
-
-        return view('reservations.index', compact('reservations'));
+        return view('reservations.index', compact('reservations', 'filters', 'activeFilters'));
     }
 
     public function show(Reservation $reservation)
     {
         $this->authorize('view', $reservation);
 
-        $reservation->load(['equipment.lab', 'user', 'approver']);
+        $reservation->load(['equipment.lab', 'user', 'approver', 'handoverManager', 'returnManager', 'rejector', 'canceller']);
 
         return view('reservations.show', compact('reservation'));
     }
@@ -61,32 +67,38 @@ class ReservationController extends Controller
         return redirect()->route('reservations.index')->with('status', 'Reservation requested. Waiting for approval.');
     }
 
-    public function cancel(Reservation $reservation): RedirectResponse
+    public function cancel(Request $request, Reservation $reservation): RedirectResponse
     {
         $this->authorize('cancel', $reservation);
 
-        $this->service->cancel($reservation);
+        $this->service->cancel($reservation, $request->user());
 
-        return back()->with('status', 'Reservation cancelled.');
+        return back()->with('status', 'Reservation #'.$reservation->id.' cancelled.');
     }
 
     // ---------- lab manager screens ----------
 
     /** Reservation Queue, with the compliance check shown for each row. */
-    public function queue(Request $request)
+    public function queue(ReservationFilterRequest $request)
     {
         abort_unless($request->user()->hasRole(Role::LabManager), 403);
-
-        $reservations = Reservation::query()
+        $filters = $request->filters();
+        $query = Reservation::query()
             ->with(['equipment', 'user'])
-            ->whereHas('equipment', fn ($q) => $q->where('lab_id', $request->user()->lab_id))
-            ->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Approved, ReservationStatus::CheckedOut])
-            ->orderBy('starts_at')
-            ->paginate(15);
+            ->whereHas('equipment', fn ($query) => $query->where('lab_id', $request->user()->lab_id))
+            ->when($filters['status'] ?? null,
+                fn ($query, $status) => $query->where('status', $status),
+                fn ($query) => $query->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Approved, ReservationStatus::CheckedOut]))
+            ->when($filters['q'] ?? null, fn ($query, $search) => $query->whereHas('user', fn ($borrower) => $borrower
+                ->where(fn ($match) => $match->where('name', 'like', '%'.$search.'%')->orWhere('email', 'like', '%'.$search.'%'))))
+            ->when($filters['overdue'] ?? false, fn ($query) => $query->checkedOut()->where('ends_at', '<', now()));
+        $this->sort($query, $filters);
+        $reservations = $query->paginate(15)->withQueryString();
+        $missingDocuments = $this->service->missingDocumentMap($reservations->getCollection());
+        $compliance = array_map(fn (array $titles) => $titles === [], $missingDocuments);
+        $activeFilters = filled($filters['status'] ?? null) || filled($filters['q'] ?? null) || filled($filters['overdue'] ?? null);
 
-        $compliance = $this->service->complianceMap($reservations->getCollection());
-
-        return view('reservations.queue', compact('reservations', 'compliance'));
+        return view('reservations.queue', compact('reservations', 'compliance', 'missingDocuments', 'filters', 'activeFilters'));
     }
 
     public function approve(Request $request, Reservation $reservation): RedirectResponse
@@ -95,33 +107,45 @@ class ReservationController extends Controller
 
         $this->service->approve($reservation, $request->user());
 
-        return back()->with('status', 'Reservation approved.');
+        return back()->with('status', 'Reservation #'.$reservation->id.' approved.');
     }
 
-    public function reject(Reservation $reservation): RedirectResponse
+    public function reject(RejectReservationRequest $request, Reservation $reservation): RedirectResponse
     {
         $this->authorize('manage', $reservation);
 
-        $this->service->reject($reservation);
+        $this->service->reject($reservation, $request->validated('rejection_reason'), $request->user());
 
-        return back()->with('status', 'Reservation rejected.');
+        return back()->with('status', 'Reservation #'.$reservation->id.' rejected.');
     }
 
-    public function handover(Reservation $reservation): RedirectResponse
+    public function handover(Request $request, Reservation $reservation): RedirectResponse
     {
         $this->authorize('manage', $reservation);
 
-        $this->service->handOver($reservation);
+        $this->service->handOver($reservation, $request->user());
 
-        return back()->with('status', 'Item handed over.');
+        return back()->with('status', 'Reservation #'.$reservation->id.': item handed over.');
     }
 
-    public function return(Reservation $reservation): RedirectResponse
+    public function return(Request $request, Reservation $reservation): RedirectResponse
     {
         $this->authorize('manage', $reservation);
 
-        $this->service->markReturned($reservation);
+        $this->service->markReturned($reservation, $request->user());
 
-        return back()->with('status', 'Item returned.');
+        return back()->with('status', 'Reservation #'.$reservation->id.': item returned.');
+    }
+
+    private function sort(Builder $query, array $filters, string $defaultDirection = 'asc'): void
+    {
+        $column = match ($filters['sort'] ?? 'starts_at') {
+            'equipment' => Equipment::query()->select('name')->whereColumn('equipment.id', 'reservations.equipment_id'),
+            'borrower' => User::query()->select('name')->whereColumn('users.id', 'reservations.user_id'),
+            'ends_at' => 'reservations.ends_at',
+            'status' => 'reservations.status',
+            default => 'reservations.starts_at',
+        };
+        $query->orderBy($column, $filters['direction'] ?? $defaultDirection)->orderBy('reservations.id', $filters['direction'] ?? $defaultDirection);
     }
 }

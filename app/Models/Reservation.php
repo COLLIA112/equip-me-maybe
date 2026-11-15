@@ -16,6 +16,8 @@ class Reservation extends Model
     protected $fillable = [
         'equipment_id', 'user_id', 'approved_by', 'starts_at', 'ends_at',
         'status', 'handed_over_at', 'returned_at', 'is_class_session',
+        'rejection_reason', 'approved_at', 'handed_over_by', 'returned_by',
+        'rejected_by', 'rejected_at', 'cancelled_by', 'cancelled_at',
     ];
 
     protected function casts(): array
@@ -27,6 +29,9 @@ class Reservation extends Model
             'ends_at' => 'datetime',
             'handed_over_at' => 'datetime',
             'returned_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -43,6 +48,31 @@ class Reservation extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function handoverManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handed_over_by');
+    }
+
+    public function returnManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'returned_by');
+    }
+
+    public function rejector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function canceller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->status === ReservationStatus::CheckedOut && $this->ends_at->isPast();
     }
 
     // ---------- scopes ----------

@@ -80,7 +80,7 @@ class ReservationRulesTest extends TestCase
         ])->all();
 
         $this->actingAs($manager)->patch(route('reservations.approve', $first))
-            ->assertSessionHas('status', 'Reservation approved.');
+            ->assertSessionHas('status', 'Reservation #'.$first->id.' approved.');
 
         $this->patch(route('reservations.approve', $second))
             ->assertSessionHasErrors('starts_at');
