@@ -2,17 +2,26 @@
 
 namespace Database\Factories;
 
-use App\Enums\Role;
-use App\Models\Department;
-use App\Models\Lab;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+/**
+ * @extends Factory<User>
+ */
 class UserFactory extends Factory
 {
-    protected static ?string $password = null;
+    /**
+     * The current password being used by the factory.
+     */
+    protected static ?string $password;
 
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
     public function definition(): array
     {
         return [
@@ -21,46 +30,16 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'role' => Role::Student, // public registration default
-            'lab_id' => null,
-            'department_id' => null,
         ];
     }
 
+    /**
+     * Indicate that the model's email address should be unverified.
+     */
     public function unverified(): static
     {
-        return $this->state(fn () => ['email_verified_at' => null]);
-    }
-
-    public function student(): static
-    {
-        return $this->state(fn () => ['role' => Role::Student]);
-    }
-
-    public function faculty(): static
-    {
-        return $this->state(fn () => ['role' => Role::Faculty]);
-    }
-
-    public function labManager(?Lab $lab = null): static
-    {
-        return $this->state(fn () => [
-            'role' => Role::LabManager,
-            'lab_id' => $lab?->id ?? Lab::factory(),
-            'department_id' => $lab?->department_id,
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
         ]);
-    }
-
-    public function departmentHead(?Department $department = null): static
-    {
-        return $this->state(fn () => [
-            'role' => Role::DepartmentHead,
-            'department_id' => $department?->id ?? Department::factory(),
-        ]);
-    }
-
-    public function securityAuditor(): static
-    {
-        return $this->state(fn () => ['role' => Role::SecurityAuditor]);
     }
 }

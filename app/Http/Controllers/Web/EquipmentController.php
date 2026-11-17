@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Enums\ReservationStatus;
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EquipmentRequest;
 use App\Models\Department;
+use App\Models\Document;
 use App\Models\Equipment;
 use App\Models\Lab;
 use App\Models\Tag;
@@ -55,7 +56,11 @@ class EquipmentController extends Controller
             ->get()
             ->keyBy('id');
 
-        return view('equipment.show', compact('equipment', 'booked', 'progress'));
+        // Only computed for people who may delete; null means "safe to delete".
+        $canDelete = $request->user()->can('delete', $equipment);
+        $deleteBlocker = $canDelete ? $equipment->deletionBlocker() : null;
+
+        return view('equipment.show', compact('equipment', 'booked', 'progress', 'canDelete', 'deleteBlocker'));
     }
 
     public function create(Request $request)
@@ -70,11 +75,11 @@ class EquipmentController extends Controller
         $this->authorize('create', Equipment::class);
 
         $user = $request->user();
-        $labId = $user->hasRole(\App\Enums\Role::LabManager) ? $user->lab_id : $request->integer('lab_id');
+        $labId = $user->hasRole(Role::LabManager) ? $user->lab_id : $request->integer('lab_id');
 
         // A head may only add to labs of their own department.
         abort_unless(Lab::whereKey($labId)->when(
-            $user->hasRole(\App\Enums\Role::DepartmentHead),
+            $user->hasRole(Role::DepartmentHead),
             fn ($q) => $q->where('department_id', $user->department_id)
         )->exists(), 403);
 
@@ -118,13 +123,38 @@ class EquipmentController extends Controller
         return redirect()->route('equipment.show', $equipment)->with('status', 'Equipment updated.');
     }
 
+    /**
+     * Safe delete: refuse when the item has open reservations, an unresolved
+     * maintenance issue, or any history (the foreign keys would cascade and erase it).
+     */
     public function destroy(Equipment $equipment): RedirectResponse
     {
         $this->authorize('delete', $equipment);
 
-        $equipment->delete();
+        if ($reason = $equipment->deletionBlocker()) {
+            return redirect()
+                ->route('equipment.show', $equipment)
+                ->withErrors(['delete' => "{$equipment->name} cannot be deleted. {$reason}"]);
+        }
 
-        return redirect()->route('equipment.index')->with('status', 'Equipment deleted.');
+        $name = $equipment->name;
+        $photo = $equipment->photo_path;
+        $documentPaths = $equipment->documents()->pluck('file_path');
+
+        $equipment->delete(); // equipment_tag and document rows cascade
+
+        // Clean up the files so nothing is orphaned on disk.
+        if ($photo) {
+            Storage::disk('public')->delete($photo);
+        }
+        // Seeded demo documents share one placeholder file, so only remove files nobody else uses.
+        foreach ($documentPaths->unique() as $path) {
+            if (! Document::where('file_path', $path)->exists()) {
+                Storage::disk('local')->delete($path);
+            }
+        }
+
+        return redirect()->route('equipment.index')->with('status', "{$name} was deleted.");
     }
 
     private function formData(Request $request): array
@@ -134,8 +164,8 @@ class EquipmentController extends Controller
         return [
             'tags' => Tag::orderBy('name')->get(),
             'labs' => Lab::query()
-                ->when($user->hasRole(\App\Enums\Role::DepartmentHead), fn ($q) => $q->where('department_id', $user->department_id))
-                ->when($user->hasRole(\App\Enums\Role::LabManager), fn ($q) => $q->whereKey($user->lab_id))
+                ->when($user->hasRole(Role::DepartmentHead), fn ($q) => $q->where('department_id', $user->department_id))
+                ->when($user->hasRole(Role::LabManager), fn ($q) => $q->whereKey($user->lab_id))
                 ->orderBy('name')->get(),
         ];
     }
