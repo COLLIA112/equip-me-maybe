@@ -11,6 +11,7 @@ class CatalogFilterRequest extends NormalizedFilterRequest
     {
         return [
             'q' => ['nullable', 'string', 'max:150'],
+            'model' => ['nullable', 'string', 'max:255'],
             'department_id' => ['nullable', 'integer', 'exists:departments,id'],
             'lab_id' => ['nullable', 'integer', 'exists:labs,id'],
             'status' => ['nullable', Rule::enum(EquipmentStatus::class)],

@@ -69,7 +69,7 @@ class RememberListPreferences
         $response = $next($request);
         if ($response->isSuccessful()) {
             $saved = array_diff_key($normalized, ['page' => true]);
-            if ($remember) {
+            if ($remember && ! ($name === 'equipment.index' && isset($normalized['model']))) {
                 $preferences = $user->fresh()->preferences ?? [];
                 $preferences['lists'][$name] = $saved;
                 $user->forceFill(['preferences' => $preferences])->save();
@@ -93,6 +93,7 @@ class RememberListPreferences
             ],
             'equipment.index' => [
                 'q' => ['nullable', 'string', 'max:150'],
+                'model' => ['nullable', 'string', 'max:255'],
                 'department_id' => ['nullable', 'integer', 'exists:departments,id'],
                 'lab_id' => ['nullable', 'integer', 'exists:labs,id'],
                 'status' => ['nullable', Rule::enum(EquipmentStatus::class)],

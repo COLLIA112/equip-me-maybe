@@ -60,6 +60,11 @@ class Equipment extends Model
         return Attribute::get(fn () => $this->photo_path ? Storage::disk('public')->url($this->photo_path) : null);
     }
 
+    public function catalogModelName(): string
+    {
+        return preg_replace('/\s+#\d+$/u', '', trim($this->name));
+    }
+
     // ---------- relationships ----------
     public function lab(): BelongsTo
     {
@@ -123,28 +128,31 @@ class Equipment extends Model
     public function availabilityGlance(): array
     {
         if ($this->status === EquipmentStatus::UnderRepair || $this->getAttribute('has_open_repairs')) {
-            return ['label' => 'Under repair', 'classes' => 'bg-red-100 text-red-800'];
+            return ['label' => 'Under repair', 'classes' => 'bg-red-100 text-red-800', 'available' => false];
         }
         if ($this->getAttribute('closure_until')) {
             return [
                 'label' => 'Lab closed until '.Carbon::parse($this->getAttribute('closure_until'))->format('M j, Y g:i A'),
                 'classes' => 'bg-orange-100 text-orange-900',
+                'available' => false,
             ];
         }
         if ($this->getAttribute('checked_out_until') && Carbon::parse($this->getAttribute('checked_out_until'))->isPast()) {
             return [
                 'label' => 'Checked out; overdue since '.Carbon::parse($this->getAttribute('checked_out_until'))->format('M j, Y g:i A'),
                 'classes' => 'bg-orange-100 text-orange-900',
+                'available' => false,
             ];
         }
         if ($this->getAttribute('booked_until') || $this->getAttribute('checked_out_until')) {
             return [
                 'label' => 'Booked until '.Carbon::parse($this->getAttribute('booked_until') ?? $this->getAttribute('checked_out_until'))->format('M j, Y g:i A'),
                 'classes' => 'bg-orange-100 text-orange-900',
+                'available' => false,
             ];
         }
 
-        return ['label' => 'Free now', 'classes' => 'bg-green-100 text-green-800'];
+        return ['label' => 'Free now', 'classes' => 'bg-green-100 text-green-800', 'available' => true];
     }
 
     /** The reservation that is currently checked out, if any. */

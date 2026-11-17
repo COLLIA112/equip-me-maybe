@@ -12,11 +12,14 @@ use App\Models\Equipment;
 use App\Models\Lab;
 use App\Models\Tag;
 use App\Services\ActivityRecorder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class EquipmentController extends Controller
@@ -28,26 +31,127 @@ class EquipmentController extends Controller
 
         $user = $request->user();
         $isHead = $user->hasRole(Role::DepartmentHead);
+        $filters = $request->only(['q', 'department_id', 'lab_id', 'status', 'tag']);
+        $search = $filters['q'] ?? '';
+        $model = $request->input('model');
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction', 'asc');
 
-        $equipment = Equipment::query()
+        $catalog = Equipment::query()
             ->when($isHead, fn ($query) => $query->whereHas('lab', fn ($lab) => $lab->where('department_id', $user->department_id)))
-            ->with(['lab.department', 'tags'])->withAvailability()
-            ->filter($request->only(['q', 'department_id', 'lab_id', 'status', 'tag']))
-            ->orderBy($request->input('sort', 'name'), $request->input('direction', 'asc'))
-            ->orderBy('id')
-            ->paginate(12)
-            ->withQueryString();
+            ->filter(collect($filters)->except('q')->all());
+
+        if ($model !== null) {
+            $modelKey = Str::lower($model);
+            $ids = (clone $catalog)
+                ->where(fn ($query) => $query->whereLike('name', $model)->orWhereLike('name', $model.'%#%'))
+                ->get(['id', 'name'])
+                ->filter(fn (Equipment $item) => Str::lower($item->catalogModelName()) === $modelKey)
+                ->modelKeys();
+            $catalog->whereIntegerInRaw('id', $ids);
+        }
+
+        $showUnits = $this->applyCatalogSearch(
+            $catalog, $search, $model !== null || isset($filters['lab_id']) || isset($filters['department_id'])
+        );
+        $catalog->orderBy($sort, $direction)->orderBy('id')->withAvailability();
+
+        $equipment = $showUnits
+            ? $catalog->with('lab.department')->paginate(12)->withQueryString()
+            : $this->paginateCatalogModels($catalog, $request);
 
         return view('equipment.index', [
             'equipment' => $equipment,
+            'model' => $model,
+            'showUnits' => $showUnits,
+            'modelFilters' => $request->only(['status', 'tag', 'sort', 'direction']),
             'departments' => Department::when($isHead, fn ($query) => $query->whereKey($user->department_id))->orderBy('name')->get(),
             'labs' => Lab::when($isHead, fn ($query) => $query->where('department_id', $user->department_id))->orderBy('name')->get(),
             'tags' => Tag::orderBy('name')->get(),
-            'filters' => $request->only(['q', 'department_id', 'lab_id', 'status', 'tag']),
-            'sort' => $request->input('sort', 'name'),
-            'direction' => $request->input('direction', 'asc'),
-            'wishlistIds' => $user->isBorrower() ? $user->wishlist()->pluck('equipment.id')->all() : [],
+            'filters' => $filters,
+            'sort' => $sort,
+            'direction' => $direction,
+            'wishlistIds' => $showUnits && $user->isBorrower() ? $user->wishlist()->pluck('equipment.id')->all() : [],
         ]);
+    }
+
+    /** Numbered units and identifier/location matches use the unit table. */
+    private function applyCatalogSearch(Builder $catalog, string $search, bool $showUnits): bool
+    {
+        if ($search === '') {
+            return $showUnits;
+        }
+
+        if (preg_match('/^(.*?)\s*#(\d+)$/u', $search, $parts)) {
+            $catalog->where(fn ($query) => $query
+                ->where(fn ($name) => $name->whereLike('name', '% #'.$parts[2])
+                    ->when($parts[1] !== '', fn ($name) => $this->matchCatalogName($name, $parts[1])))
+                ->orWhereLike('serial_number', $search)
+                ->orWhereLike('qr_code', $search));
+
+            return true;
+        }
+
+        $exact = fn ($query) => $this->matchUnitIdentifiers($query, $search);
+        if ((clone $catalog)->where($exact)->exists()) {
+            $catalog->where($exact);
+
+            return true;
+        }
+
+        $pattern = '%'.$search.'%';
+        $matchesName = fn ($query) => $this->matchCatalogName($query, $search);
+        if (! $showUnits && (clone $catalog)->where($matchesName)->exists()) {
+            $catalog->where($matchesName);
+
+            return false;
+        }
+
+        $catalog->where(fn ($query) => $this->matchUnitIdentifiers($query, $pattern)->orWhere($matchesName));
+
+        return true;
+    }
+
+    private function matchCatalogName(Builder $query, string $search): Builder
+    {
+        $aliases = config('equipment.catalog_search_aliases', [])[Str::lower($search)] ?? [];
+
+        return $query->where(function (Builder $names) use ($search, $aliases) {
+            $names->whereLike('name', '%'.$search.'%');
+
+            foreach ($aliases as $alias) {
+                $names->orWhereLike('name', $alias)->orWhereLike('name', $alias.' #%');
+            }
+        });
+    }
+
+    private function matchUnitIdentifiers(Builder $query, string $pattern): Builder
+    {
+        return $query->whereLike('serial_number', $pattern)
+            ->orWhereLike('qr_code', $pattern)
+            ->orWhereHas('lab', fn ($lab) => $lab->whereLike('name', $pattern))
+            ->orWhereHas('lab.department', fn ($department) => $department->whereLike('name', $pattern));
+    }
+
+    private function paginateCatalogModels(Builder $catalog, Request $request): LengthAwarePaginator
+    {
+        $models = $catalog->get()
+            ->groupBy(fn (Equipment $item) => Str::lower($item->catalogModelName()))
+            ->map(fn ($units) => [
+                'name' => $units->first()->catalogModelName(),
+                'photo_url' => $units->first(fn (Equipment $item) => filled($item->photo_path))?->photo_url,
+                'quantity' => $units->count(),
+                'available' => $units->filter(fn (Equipment $item) => $item->availabilityGlance()['available'])->count(),
+            ]);
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        return (new LengthAwarePaginator(
+            $models->forPage($page, 12)->values(),
+            $models->count(),
+            12,
+            $page,
+            ['path' => $request->url()],
+        ))->withQueryString();
     }
 
     public function show(EquipmentCalendarRequest $request, Equipment $equipment)
