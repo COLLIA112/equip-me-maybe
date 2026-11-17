@@ -27,6 +27,11 @@ Thumbs.db
 
 /storage/framework/*
 !/storage/framework/.gitignore
+!/storage/framework/cache/
+/storage/framework/cache/*
+!/storage/framework/cache/data/
+!/storage/framework/sessions/
+!/storage/framework/views/
 /storage/logs/*
 !/storage/logs/.gitignore
 /storage/app/*

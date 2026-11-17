@@ -5,24 +5,24 @@
 
     @unless ($isEdit)
         <div>
-            <label class="block text-sm font-medium">Lab</label>
-            <select name="lab_id" class="mt-1 w-full rounded-md border-slate-300 text-sm" required>
+            <label for="lab_id" class="block text-sm font-medium">Lab</label>
+            <select id="lab_id" name="lab_id" class="mt-1 w-full rounded-md border-slate-300 text-sm" required>
                 @foreach ($labs as $lab)<option value="{{ $lab->id }}" @selected(old('lab_id') == $lab->id)>{{ $lab->name }}</option>@endforeach
             </select>
         </div>
     @endunless
 
     <div>
-        <label class="block text-sm font-medium">Name</label>
-        <input name="name" value="{{ old('name', $equipment->name ?? '') }}" required class="mt-1 w-full rounded-md border-slate-300 text-sm">
+        <label for="name" class="block text-sm font-medium">Name</label>
+        <input id="name" name="name" value="{{ old('name', $equipment->name ?? '') }}" required class="mt-1 w-full rounded-md border-slate-300 text-sm">
     </div>
     <div>
-        <label class="block text-sm font-medium">Serial number</label>
-        <input name="serial_number" value="{{ old('serial_number', $equipment->serial_number ?? '') }}" required class="mt-1 w-full rounded-md border-slate-300 text-sm">
+        <label for="serial_number" class="block text-sm font-medium">Serial number</label>
+        <input id="serial_number" name="serial_number" value="{{ old('serial_number', $equipment->serial_number ?? '') }}" required class="mt-1 w-full rounded-md border-slate-300 text-sm">
     </div>
     <div>
-        <label class="block text-sm font-medium">Photo (JPG or PNG, max 2 MB)</label>
-        <input type="file" name="photo" accept="image/png,image/jpeg" class="mt-1 block w-full text-sm">
+        <label for="photo" class="block text-sm font-medium">Photo (JPG or PNG, max 2 MB)</label>
+        <input type="file" id="photo" name="photo" accept="image/png,image/jpeg" class="mt-1 block w-full text-sm">
     </div>
     <div>
         <p class="text-sm font-medium">Tags</p>
@@ -37,7 +37,7 @@
         </div>
     </div>
     <div class="flex gap-2">
-        <button class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">{{ $isEdit ? 'Save changes' : 'Create equipment' }}</button>
+        <button class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">{{ $isEdit ? 'Save changes' : 'Create equipment' }}</button>
         <a href="{{ route('equipment.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50">Cancel</a>
     </div>
 </form>

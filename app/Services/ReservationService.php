@@ -4,8 +4,12 @@ namespace App\Services;
 
 use App\Enums\EquipmentStatus;
 use App\Enums\ReservationStatus;
+use App\Enums\Role;
 use App\Models\Document;
 use App\Models\Equipment;
+use App\Models\Lab;
+use App\Models\LabClosure;
+use App\Models\MaintenanceLog;
 use App\Models\Reservation;
 use App\Models\User;
 use Carbon\CarbonInterface;
@@ -21,98 +25,182 @@ use Illuminate\Validation\ValidationException;
  */
 class ReservationService
 {
+    public const FACULTY_PRIORITY_REASON = 'An overlapping faculty class session received priority over this pending student request.';
+
     // ---------- lifecycle ----------
 
-    public function request(User $user, Equipment $equipment, CarbonInterface $start, CarbonInterface $end): Reservation
-    {
-        return DB::transaction(function () use ($user, $equipment, $start, $end) {
+    public function request(
+        User $user,
+        Equipment $equipment,
+        CarbonInterface $start,
+        CarbonInterface $end,
+        bool $isClassSession = false,
+    ): Reservation {
+        $isClassSession = $isClassSession && $user->hasRole(Role::Faculty);
+
+        return DB::transaction(function () use ($user, $equipment, $start, $end, $isClassSession) {
             // Lock the item row so two simultaneous requests cannot both pass the overlap check.
             $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
 
             $this->assertNotUnderRepair($equipment);
+            $this->assertLabOpen($equipment, $start, $end);
             $this->assertNoConflict($equipment, $start, $end);
 
-            return $equipment->reservations()->create([
+            if ($isClassSession) {
+                $displaced = $equipment->reservations()
+                    ->overlapping($start, $end)->where('status', ReservationStatus::Pending)
+                    ->whereHas('user', fn ($query) => $query->where('role', Role::Student))->get();
+                foreach ($displaced as $pending) {
+                    $pending->update([
+                        'status' => ReservationStatus::Rejected,
+                        'rejection_reason' => self::FACULTY_PRIORITY_REASON,
+                        'rejected_at' => now(),
+                    ]);
+                    $this->recordChange('rejected', null, $equipment, $pending, ['reason' => self::FACULTY_PRIORITY_REASON]);
+                }
+            }
+
+            $reservation = $equipment->reservations()->create([
                 'user_id' => $user->id,
                 'starts_at' => $start,
                 'ends_at' => $end,
                 'status' => ReservationStatus::Pending,
+                'is_class_session' => $isClassSession,
             ]);
+            $this->recordChange('requested', $user, $equipment, $reservation);
+
+            return $reservation;
         });
     }
 
     public function approve(Reservation $reservation, User $approver): Reservation
     {
         return DB::transaction(function () use ($reservation, $approver) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+
+            // Route binding may have loaded the reservation before another approval committed.
+            $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Pending);
 
-            $equipment = $reservation->equipment;
             $this->assertNotUnderRepair($equipment);
             $this->assertCompliant($reservation);
+            $this->assertLabOpen($equipment, $reservation->starts_at, $reservation->ends_at);
             $this->assertNoConflict($equipment, $reservation->starts_at, $reservation->ends_at, $reservation->id);
 
             $reservation->update([
                 'status' => ReservationStatus::Approved,
                 'approved_by' => $approver->id,
+                'approved_at' => now(),
             ]);
+
+            $this->recordChange('approved', $approver, $equipment, $reservation);
 
             return $reservation;
         });
     }
 
-    public function reject(Reservation $reservation): Reservation
+    public function reject(Reservation $reservation, ?string $reason = null, ?User $actor = null): Reservation
     {
-        $this->assertStatus($reservation, ReservationStatus::Pending);
-        $reservation->update(['status' => ReservationStatus::Rejected]);
+        return DB::transaction(function () use ($reservation, $reason, $actor) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $reservation->refresh();
+            $this->assertStatus($reservation, ReservationStatus::Pending);
+            $reservation->update([
+                'status' => ReservationStatus::Rejected,
+                'rejection_reason' => filled($reason) ? trim($reason) : null,
+                'rejected_by' => $actor?->id,
+                'rejected_at' => now(),
+            ]);
 
-        return $reservation;
+            $this->recordChange('rejected', $actor, $equipment, $reservation);
+
+            return $reservation;
+        });
     }
 
-    public function cancel(Reservation $reservation): Reservation
+    public function cancel(Reservation $reservation, ?User $actor = null): Reservation
     {
-        if (! in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Approved], true)) {
-            throw ValidationException::withMessages(['status' => 'Only pending or approved reservations can be cancelled.']);
-        }
+        return DB::transaction(function () use ($reservation, $actor) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $reservation->refresh();
 
-        $reservation->update(['status' => ReservationStatus::Cancelled]);
+            if (! in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Approved], true)) {
+                throw ValidationException::withMessages(['status' => 'Only pending or approved reservations can be cancelled.']);
+            }
 
-        return $reservation;
+            $reservation->update([
+                'status' => ReservationStatus::Cancelled,
+                'cancelled_by' => $actor?->id,
+                'cancelled_at' => now(),
+            ]);
+
+            $this->recordChange('cancelled', $actor, $equipment, $reservation);
+
+            return $reservation;
+        });
     }
 
-    public function handOver(Reservation $reservation): Reservation
+    public function handOver(Reservation $reservation, ?User $actor = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $actor) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Approved);
 
-            $equipment = $reservation->equipment;
             $this->assertNotUnderRepair($equipment);
             $this->assertCompliant($reservation); // checked again so a direct request cannot skip it
 
             $reservation->update([
                 'status' => ReservationStatus::CheckedOut,
                 'handed_over_at' => now(),
+                'handed_over_by' => $actor?->id,
             ]);
             $equipment->update(['status' => EquipmentStatus::Reserved]);
+
+            $this->recordChange('checked_out', $actor, $equipment, $reservation);
 
             return $reservation;
         });
     }
 
-    public function markReturned(Reservation $reservation): Reservation
+    public function markReturned(Reservation $reservation, ?User $actor = null, string $condition = 'good', ?string $notes = null): Reservation
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $actor, $condition, $notes) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::CheckedOut);
+            if (! in_array($condition, ['good', 'damaged', 'missing_parts'], true)
+                || ($condition !== 'good' && (! $actor || ! filled($notes)))) {
+                throw ValidationException::withMessages(['return_notes' => 'Record the damage or missing parts before returning this item.']);
+            }
 
             $reservation->update([
                 'status' => ReservationStatus::Returned,
                 'returned_at' => now(),
+                'returned_by' => $actor?->id,
+                'return_condition' => $condition,
+                'return_notes' => filled($notes) ? trim($notes) : null,
             ]);
 
-            // Back to available, unless it was flagged for repair in the meantime.
-            $equipment = $reservation->equipment;
-            if ($equipment->status !== EquipmentStatus::UnderRepair) {
-                $equipment->update(['status' => EquipmentStatus::Available]);
+            if ($condition !== 'good') {
+                MaintenanceLog::create([
+                    'equipment_id' => $equipment->id, 'reservation_id' => $reservation->id,
+                    'reported_by' => $actor->id,
+                    'issue' => ($condition === 'damaged' ? 'Damage on return: ' : 'Missing parts on return: ').trim($notes),
+                ]);
+                $equipment->update(['status' => EquipmentStatus::UnderRepair]);
             }
+
+            // Back to available, unless it was flagged for repair in the meantime.
+            if ($equipment->status !== EquipmentStatus::UnderRepair) {
+                $equipment->update([
+                    'status' => $equipment->reservations()->checkedOut()->exists()
+                        ? EquipmentStatus::Reserved
+                        : EquipmentStatus::Available,
+                ]);
+            }
+
+            $this->recordChange('returned', $actor, $equipment, $reservation, ['condition' => $condition]);
 
             return $reservation;
         });
@@ -149,9 +237,16 @@ class ReservationService
      */
     public function complianceMap(Collection $reservations): array
     {
+        return array_map(fn (array $titles) => $titles === [], $this->missingDocumentMap($reservations));
+    }
+
+    /** Missing document titles for a whole page, using two queries rather than one per row. */
+    public function missingDocumentMap(Collection $reservations): array
+    {
         $required = Document::whereIn('equipment_id', $reservations->pluck('equipment_id')->unique())
             ->where('is_required', true)
-            ->get(['id', 'equipment_id'])
+            ->orderBy('title')
+            ->get(['id', 'equipment_id', 'title'])
             ->groupBy('equipment_id');
 
         $acknowledged = DB::table('document_user')
@@ -161,15 +256,37 @@ class ReservationService
             ->groupBy('user_id')
             ->map(fn ($rows) => $rows->pluck('document_id'));
 
-        return $reservations->mapWithKeys(function (Reservation $r) use ($required, $acknowledged) {
-            $needed = ($required[$r->equipment_id] ?? collect())->pluck('id');
-            $have = $acknowledged[$r->user_id] ?? collect();
+        return $reservations->mapWithKeys(function (Reservation $reservation) use ($required, $acknowledged) {
+            $have = $acknowledged[$reservation->user_id] ?? collect();
+            $missing = ($required[$reservation->equipment_id] ?? collect())
+                ->reject(fn (Document $document) => $have->contains($document->id))
+                ->pluck('title')->all();
 
-            return [$r->id => $needed->diff($have)->isEmpty()];
+            return [$reservation->id => $missing];
         })->all();
     }
 
     // ---------- assertions ----------
+
+    private function recordChange(string $event, ?User $actor, Equipment $equipment, Reservation $reservation, array $details = []): void
+    {
+        app(ActivityRecorder::class)->record($event, $actor, $equipment, $reservation, $details);
+        app(ReservationNotifier::class)->changed($reservation, $event);
+        if (in_array($event, ['approved', 'checked_out', 'returned', 'cancelled'], true)) {
+            AvailabilityNotifier::notify($equipment);
+        }
+    }
+
+    private function assertLabOpen(Equipment $equipment, CarbonInterface $start, CarbonInterface $end): void
+    {
+        // Closure writes take the same lab lock. Use a current read after waiting on it.
+        Lab::whereKey($equipment->lab_id)->lockForUpdate()->firstOrFail();
+        $closure = LabClosure::query()->where('lab_id', $equipment->lab_id)
+            ->where('starts_at', '<', $end)->where('ends_at', '>', $start)->orderBy('starts_at')->lockForUpdate()->first();
+        if ($closure) {
+            throw ValidationException::withMessages(['starts_at' => 'This lab is unavailable from '.$closure->starts_at->format('M j, Y g:i A').' to '.$closure->ends_at->format('M j, Y g:i A').': '.$closure->reason]);
+        }
+    }
 
     private function assertNotUnderRepair(Equipment $equipment): void
     {

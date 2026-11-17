@@ -1,3 +1,101 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    [x-cloak] { display: none !important; }
+
+    :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+    }
+
+    aside :is(a, button):focus-visible {
+        outline-color: #93c5fd;
+    }
+
+    button:disabled,
+    [data-submitting-control] {
+        @apply cursor-not-allowed opacity-60;
+    }
+
+    [data-submitting-control] {
+        cursor: progress;
+        pointer-events: none;
+    }
+
+    th, td {
+        overflow-wrap: anywhere;
+    }
+
+    input, select, textarea {
+        max-width: 100%;
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    html.dark { color-scheme: dark; }
+    html.dark body { background-color: #0f172a; color: #e2e8f0; }
+
+    /* Keep existing reusable Blade components readable in the saved dark theme. */
+    html.dark :is(.bg-white, .bg-slate-50, .bg-gray-50) { background-color: #111c30; }
+    html.dark :is(.bg-slate-100, .bg-gray-100, .bg-gray-200) { background-color: #1e293b; }
+    html.dark :is(.text-slate-950, .text-slate-900, .text-slate-800, .text-gray-900, .text-gray-800, .text-gray-700) { color: #f1f5f9; }
+    html.dark :is(.text-slate-700, .text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500) { color: #cbd5e1; }
+    html.dark :is(.text-blue-600, .text-blue-700) { color: #93c5fd; }
+    html.dark :is(.border-slate-200, .border-slate-300, .border-gray-200, .border-gray-300) { border-color: #475569; }
+    html.dark :is(input, select, textarea) { background-color: #172338; color: #f1f5f9; border-color: #64748b; }
+    html.dark :is(input, textarea)::placeholder { color: #94a3b8; }
+    html.dark :is(.hover\:bg-slate-50, .hover\:bg-slate-100, .hover\:bg-gray-100):hover { background-color: #273449; }
+    html.dark .bg-green-50 { background-color: #14352b; }
+    html.dark .bg-red-50 { background-color: #421e29; }
+    html.dark .bg-blue-50 { background-color: #142f50; }
+    html.dark .bg-amber-50 { background-color: #3a2b16; }
+    html.dark :is(.text-green-700, .text-green-800, .text-green-900, .text-emerald-700, .text-emerald-800, .text-emerald-900) { color: #86efac; }
+    html.dark :is(.text-red-600, .text-red-700, .text-red-800, .text-red-900) { color: #fca5a5; }
+    html.dark :is(.text-orange-700, .text-orange-800, .text-orange-900, .text-amber-700, .text-amber-800, .text-amber-900) { color: #fcd34d; }
+    /* Status badges retain their semantic colors and sufficient contrast. */
+    html.dark :is(.bg-green-100, .bg-emerald-100) { background-color: #14532d; }
+    html.dark .bg-blue-100 { background-color: #1e3a8a; }
+    html.dark :is(.bg-orange-100, .bg-amber-100) { background-color: #78350f; }
+    html.dark .bg-red-100 { background-color: #7f1d1d; }
+    html.dark :is(.text-blue-800, .text-blue-900) { color: #bfdbfe; }
+    html.dark body.bg-slate-50 { background-color: #0f172a; }
+
+    @media print {
+        html.dark body { background-color: white !important; }
+        html.dark * { background-color: transparent !important; color: #0f172a !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
+    }
+}
+
+@layer components {
+    .page-title {
+        @apply text-xl font-bold tracking-tight text-slate-950 sm:text-2xl;
+    }
+
+    .responsive-table {
+        @apply relative max-w-full overflow-x-auto overscroll-x-contain;
+    }
+
+    .responsive-table table {
+        min-width: 34rem;
+    }
+
+    .stat-label {
+        @apply text-sm font-semibold text-slate-600;
+    }
+
+    .stat-number {
+        @apply mt-1 text-3xl font-bold tracking-tight text-slate-950;
+    }
+}

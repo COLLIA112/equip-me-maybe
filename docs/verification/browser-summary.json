@@ -1,0 +1,567 @@
+{
+  "php_runtime": "8.2.35",
+  "passed": 112,
+  "failed": 0,
+  "checks": [
+    {
+      "group": "lifecycle/API",
+      "name": "manager creates equipment",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "manager uploads private required PDF",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "student requests with default one-hour window",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "approval disabled and names required document",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "acknowledgement disabled before download",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "download then acknowledge required PDF",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "manager approves once compliance complete",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "manager hands over",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "return modal cancellation submits nothing",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "return modal confirmation sends exactly one POST",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "timeline shows actors and timestamps",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "manager rejects with visible reason",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "private PDF URL cannot be opened",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "malformed equipment filters ignored",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "API missing token401",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "auditor token issuance",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "API in-window active checkout authorized",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "API overdue checkout unauthorized",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "API unknown code stable404",
+      "passed": true
+    },
+    {
+      "group": "lifecycle/API",
+      "name": "API revoke token then401",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "guest login mobile layout",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "auditor login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student desktop /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student 375px /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student desktop /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student 375px /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student desktop /reservations",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student 375px /reservations",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student desktop /documents/checklist",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student 375px /documents/checklist",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student desktop /profile",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "student 375px /profile",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty desktop /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty 375px /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty desktop /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty 375px /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty desktop /reservations",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "faculty 375px /reservations",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager desktop /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager 375px /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager desktop /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager 375px /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager desktop /queue",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager 375px /queue",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager desktop /maintenance",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "manager 375px /maintenance",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head desktop /department",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head 375px /department",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head desktop /department/users",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head 375px /department/users",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head desktop /department/labs",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head 375px /department/labs",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head desktop /maintenance",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "head 375px /maintenance",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "auditor forbidden /dashboard",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "auditor forbidden /profile",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "auditor forbidden /documents/checklist",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "auditor forbidden /equipment",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "instant select auto-submits GET with selected value",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "debounced search retains focus and caret",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "Clear filter clears query and conditional link",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "reservation default end and manual end preservation",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "reservation browser conflict hint",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "flash accessible and dismiss button works",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "axe login",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "axe catalog",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "axe queue",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "axe department",
+      "passed": true
+    },
+    {
+      "group": "UI",
+      "name": "no browser JavaScript exceptions",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "slash shortcut focuses header search without typing slash",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "breadcrumbs preserve filters and weekly calendar navigation",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "mark-all stays disabled until both required PDFs downloaded",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "checklist progress reflects acknowledged documents",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "wishlist saves unavailable item for faculty",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "bulk approve preserves compliance per row",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "approved reservation downloads a valid calendar file",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "Reserve again pre-fills future date and original duration",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "counter lookup finds equipment by QR text",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "camera scan has an accessible unsupported-device fallback",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "damaged return creates an open linked maintenance record",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "resolving repair sends wishlist availability notification",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "notification bell and mark-all-read work through the actual form",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "CSV import and scoped export work in browser",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "clone requires a new serial and gets its own QR code",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "bulk QR label printing hides sidebar in print mode",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "lab closure form blocks intersecting borrower request",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "department period, charts, exports and print report work",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "activity history shows actors and recorded actions",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "remote device dates still use the displayed application timezone",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark mode persists after reload",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility student /equipment",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility student /equipment/256",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility student /notifications",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility student /wishlist",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility manager /queue",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility manager /counter",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility manager /equipment-tools",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility manager /lab-closures",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "dark accessibility head /department",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /wishlist",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /notifications",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /activities",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /equipment/256",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /equipment-tools",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /lab-closures",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /counter",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "375px extra layout /department",
+      "passed": true
+    },
+    {
+      "group": "additional features",
+      "name": "extra actions have no JavaScript exceptions",
+      "passed": true
+    }
+  ]
+}

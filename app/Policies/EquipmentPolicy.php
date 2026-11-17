@@ -15,7 +15,9 @@ class EquipmentPolicy
 
     public function view(User $user, Equipment $equipment): bool
     {
-        return $this->viewAny($user);
+        return $this->viewAny($user)
+            && (! $user->hasRole(Role::DepartmentHead)
+                || $user->headsDepartment($equipment->loadMissing('lab')->lab->department_id));
     }
 
     public function create(User $user): bool

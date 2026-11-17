@@ -10,11 +10,11 @@ class MaintenanceLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['equipment_id', 'reservation_id', 'reported_by', 'issue', 'resolved_at'];
+    protected $fillable = ['equipment_id', 'reservation_id', 'reported_by', 'issue', 'resolved_at', 'repair_cost'];
 
     protected function casts(): array
     {
-        return ['resolved_at' => 'datetime'];
+        return ['resolved_at' => 'datetime', 'repair_cost' => 'decimal:2'];
     }
 
     public function equipment(): BelongsTo

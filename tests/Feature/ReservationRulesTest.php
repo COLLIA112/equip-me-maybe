@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ReservationStatus;
 use App\Models\Equipment;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Services\ReservationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class ReservationRulesTest extends TestCase
@@ -63,6 +66,45 @@ class ReservationRulesTest extends TestCase
 
         $this->book($student, $item, $start->toDateTimeString(), $start->copy()->addHours(2)->toDateTimeString())
             ->assertSessionHasNoErrors();
+    }
+
+    public function test_rejects_approval_of_an_overlapping_pending_reservation(): void
+    {
+        $item = Equipment::factory()->create();
+        $manager = User::factory()->labManager($item->lab)->create();
+        $start = now()->addDay()->setTime(9, 0);
+
+        [$first, $second] = Reservation::factory()->count(2)->for($item)->create([
+            'starts_at' => $start,
+            'ends_at' => $start->copy()->addHours(2),
+        ])->all();
+
+        $this->actingAs($manager)->patch(route('reservations.approve', $first))
+            ->assertSessionHas('status', 'Reservation #'.$first->id.' approved.');
+
+        $this->patch(route('reservations.approve', $second))
+            ->assertSessionHasErrors('starts_at');
+
+        $this->assertSame(ReservationStatus::Approved, $first->fresh()->status);
+        $second->refresh();
+        $this->assertSame(ReservationStatus::Pending, $second->status);
+        $this->assertNull($second->approved_by);
+    }
+
+    public function test_approval_rechecks_the_status_of_a_stale_reservation(): void
+    {
+        $item = Equipment::factory()->create();
+        $manager = User::factory()->labManager($item->lab)->create();
+        $reservation = Reservation::factory()->for($item)->create();
+        $staleReservation = $reservation->fresh();
+
+        $service = app(ReservationService::class);
+        $service->approve($reservation, $manager);
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Reservation must be Pending for this action (currently Approved).');
+
+        $service->approve($staleReservation, $manager);
     }
 
     public function test_faculty_can_reserve_but_security_auditor_cannot(): void

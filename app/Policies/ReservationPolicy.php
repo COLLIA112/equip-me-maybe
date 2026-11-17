@@ -17,7 +17,7 @@ class ReservationPolicy
     {
         $reservation->loadMissing('equipment.lab');
 
-        return $user->id === $reservation->user_id
+        return ($user->isBorrower() && $user->id === $reservation->user_id)
             || $user->managesLab($reservation->equipment->lab_id)
             || $user->headsDepartment($reservation->equipment->lab->department_id);
     }
