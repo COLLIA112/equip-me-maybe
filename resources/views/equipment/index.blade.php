@@ -3,7 +3,10 @@
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-semibold">Equipment catalog</h1>
             @can('create', \App\Models\Equipment::class)
-                <a href="{{ route('equipment.create') }}" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Add equipment</a>
+                <div class="flex gap-2">
+                    <a href="{{ route('tags.index') }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Manage tags</a>
+                    <a href="{{ route('equipment.create') }}" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Add equipment</a>
+                </div>
             @endcan
         </div>
     </x-slot>

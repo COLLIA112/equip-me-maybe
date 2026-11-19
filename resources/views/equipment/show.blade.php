@@ -14,9 +14,23 @@
                     <a href="{{ route('equipment.edit', $equipment) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Edit</a>
                     <a href="{{ route('documents.index', $equipment) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50">Documents</a>
                 @endcan
+                @if ($canDelete)
+                    @if ($deleteBlocker)
+                        <span title="{{ $deleteBlocker }}" class="cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">Delete unavailable</span>
+                    @else
+                        <button type="button" x-data x-on:click.prevent="$dispatch('open-modal', 'confirm-equipment-deletion')"
+                                class="rounded-md border border-red-300 px-3 py-2 text-sm text-red-700 hover:bg-red-50">Delete</button>
+                    @endif
+                @endif
             </div>
         </div>
     </x-slot>
+
+    @if ($canDelete && $deleteBlocker)
+        <div class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            This item cannot be deleted. {{ $deleteBlocker }}
+        </div>
+    @endif
 
     <div class="grid gap-6 lg:grid-cols-3">
         <x-card class="lg:col-span-2">
@@ -67,4 +81,19 @@
             @endforelse
         </x-card>
     </div>
+    @if ($canDelete && ! $deleteBlocker)
+        <x-modal name="confirm-equipment-deletion" focusable>
+            <form method="POST" action="{{ route('equipment.destroy', $equipment) }}" class="p-6">
+                @csrf @method('DELETE')
+                <h2 class="text-lg font-semibold text-slate-900">Delete {{ $equipment->name }}?</h2>
+                <p class="mt-2 text-sm text-slate-600">
+                    This permanently removes the item, its photo, its tags and its documents. This cannot be undone.
+                </p>
+                <div class="mt-6 flex justify-end gap-2">
+                    <button type="button" x-on:click="$dispatch('close')" class="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50">Cancel</button>
+                    <button class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete equipment</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
 </x-app-layout>

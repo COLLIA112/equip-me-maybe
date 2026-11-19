@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\MaintenanceLogController;
 use App\Http\Controllers\Web\ReservationController;
 use App\Http\Controllers\Web\UserRoleController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Web\TagController;
 
 Route::get('/', fn () => view('welcome'));
 
@@ -33,6 +34,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/maintenance', [MaintenanceLogController::class, 'index'])->name('maintenance.index');
         Route::post('/maintenance', [MaintenanceLogController::class, 'store'])->name('maintenance.store');
         Route::patch('/maintenance/{log}/resolve', [MaintenanceLogController::class, 'resolve'])->name('maintenance.resolve');
+
+        Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
+        Route::post('/tags', [TagController::class, 'store'])->name('tags.store');
+        Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
+        Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
     });
 
     Route::get('/equipment/{equipment}', [EquipmentController::class, 'show'])->name('equipment.show');

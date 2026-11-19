@@ -56,7 +56,7 @@ class Equipment extends Model
 
     protected function photoUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->photo_path ? Storage::url($this->photo_path) : null);
+        return Attribute::get(fn () => $this->photo_path ? Storage::disk('public')->url($this->photo_path) : null);
     }
 
     // ---------- relationships ----------
@@ -96,6 +96,32 @@ class Equipment extends Model
             ->when($f['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
             ->when($f['department_id'] ?? null, fn ($q, $v) => $q->whereHas('lab', fn ($l) => $l->where('department_id', $v)))
             ->when($f['tag'] ?? null, fn ($q, $v) => $q->whereHas('tags', fn ($t) => $t->where('tags.id', $v)));
+    }
+
+    /**
+     * Why this item must not be deleted, or null when deletion is safe.
+     *
+     * The equipment foreign keys cascade, so a delete would also erase the item's
+     * reservations and maintenance logs. Department reports and breakdown history
+     * depend on those rows, so an item with any history is protected.
+     */
+    public function deletionBlocker(): ?string
+    {
+        $openStatuses = [ReservationStatus::Pending, ReservationStatus::Approved, ReservationStatus::CheckedOut];
+
+        if ($this->reservations()->whereIn('status', $openStatuses)->exists()) {
+            return 'It still has pending, approved, or checked-out reservations. Resolve those first.';
+        }
+
+        if ($this->maintenanceLogs()->whereNull('resolved_at')->exists()) {
+            return 'It has an unresolved maintenance issue. Resolve it first.';
+        }
+
+        if ($this->reservations()->exists() || $this->maintenanceLogs()->exists()) {
+            return 'It has reservation or maintenance history that department reports rely on.';
+        }
+
+        return null;
     }
 
     /** The reservation that is currently checked out, if any. */
