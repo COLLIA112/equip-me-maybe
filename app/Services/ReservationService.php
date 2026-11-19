@@ -36,7 +36,12 @@ class ReservationService
         CarbonInterface $end,
         bool $isClassSession = false,
     ): Reservation {
-        $isClassSession = $isClassSession && $user->hasRole(Role::Faculty);
+        if ($start->lt(now()) || $start->gt(now()->addDays(90))) {
+            throw ValidationException::withMessages(['starts_at' => 'Choose a start time within the next 90 days.']);
+        }
+        if ($end->lte($start) || $end->gt($start->copy()->addHours(24))) {
+            throw ValidationException::withMessages(['ends_at' => 'Reservations may last up to 24 hours.']);
+        }
 
         return DB::transaction(function () use ($user, $equipment, $start, $end, $isClassSession) {
             // Lock the item row so two simultaneous requests cannot both pass the overlap check.
@@ -46,6 +51,15 @@ class ReservationService
             $this->assertLabOpen($equipment, $start, $end);
             $this->assertNoConflict($equipment, $start, $end);
 
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            abort_unless($user->isBorrower(), 403);
+            $pending = $user->reservations()->where('status', ReservationStatus::Pending)
+                ->where('ends_at', '>', now())->lockForUpdate()->pluck('id');
+            if ($pending->count() >= 5) {
+                throw ValidationException::withMessages(['starts_at' => 'Resolve a pending request before making another.']);
+            }
+
+            $isClassSession = $isClassSession && $user->hasRole(Role::Faculty);
             if ($isClassSession) {
                 $displaced = $equipment->reservations()
                     ->overlapping($start, $end)->where('status', ReservationStatus::Pending)
@@ -81,6 +95,9 @@ class ReservationService
             // Route binding may have loaded the reservation before another approval committed.
             $reservation->refresh();
             $this->assertStatus($reservation, ReservationStatus::Pending);
+            if ($reservation->starts_at->lt(now())) {
+                throw ValidationException::withMessages(['starts_at' => 'This reservation has already started.']);
+            }
 
             $this->assertNotUnderRepair($equipment);
             $this->assertCompliant($reservation);
@@ -140,6 +157,23 @@ class ReservationService
         });
     }
 
+    public function expire(Reservation $reservation): bool
+    {
+        return DB::transaction(function () use ($reservation) {
+            $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
+            $reservation->refresh();
+            if (! in_array($reservation->status, [ReservationStatus::Pending, ReservationStatus::Approved], true)
+                || $reservation->ends_at->gt(now())) {
+                return false;
+            }
+
+            $reservation->update(['status' => ReservationStatus::Cancelled, 'cancelled_at' => now()]);
+            $this->recordChange('cancelled', null, $equipment, $reservation, ['reason' => 'expired']);
+
+            return true;
+        }, 3);
+    }
+
     public function handOver(Reservation $reservation, ?User $actor = null): Reservation
     {
         return DB::transaction(function () use ($reservation, $actor) {
@@ -149,6 +183,14 @@ class ReservationService
 
             $this->assertNotUnderRepair($equipment);
             $this->assertCompliant($reservation); // checked again so a direct request cannot skip it
+
+            $now = now();
+            if ($now->lt($reservation->starts_at) || $now->gte($reservation->ends_at)) {
+                throw ValidationException::withMessages(['starts_at' => 'Handover is only possible during the reservation.']);
+            }
+            if ($equipment->reservations()->checkedOut()->exists()) {
+                throw ValidationException::withMessages(['equipment' => 'Receive the current checkout before handing over this item.']);
+            }
 
             $reservation->update([
                 'status' => ReservationStatus::CheckedOut,

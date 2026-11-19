@@ -56,6 +56,18 @@ class EquipmentToolsController extends Controller
     public function export(Request $request)
     {
         $items = $this->visibleEquipment($request)->with('tags')->orderBy('serial_number')->get();
+        if ($request->query('format') === 'roundtrip') {
+            $rows = [['name_b64', 'serial_b64', 'tags_json_b64']];
+            foreach ($items as $item) {
+                $rows[] = array_map(
+                    fn (string $value) => 'b64:'.base64_encode($value),
+                    [$item->name, $item->serial_number, json_encode($item->tags->pluck('name')->all(), JSON_THROW_ON_ERROR)],
+                );
+            }
+
+            return $this->csvDownload('equipment-roundtrip.csv', $rows);
+        }
+
         $rows = [['name', 'serial_number', 'tags']];
         foreach ($items as $item) {
             $rows[] = [$item->name, $item->serial_number, $item->tags->pluck('name')->implode('|')];
@@ -81,9 +93,10 @@ class EquipmentToolsController extends Controller
         fwrite($stream, preg_replace('/^\xEF\xBB\xBF/', '', $content));
         rewind($stream);
         $headers = fgetcsv($stream, null, ',', '"', '');
-        if (! $headers || count($headers) !== count(array_unique($headers))
+        $roundTrip = $headers === ['name_b64', 'serial_b64', 'tags_json_b64'];
+        if (! $roundTrip && (! $headers || count($headers) !== count(array_unique($headers))
             || array_diff(['name', 'serial_number'], $headers)
-            || array_diff($headers, ['name', 'serial_number', 'tags'])) {
+            || array_diff($headers, ['name', 'serial_number', 'tags']))) {
             fclose($stream);
             throw ValidationException::withMessages(['file' => 'Use the exact CSV headers name,serial_number and optional tags. Unknown or duplicate columns are not allowed.']);
         }
@@ -105,7 +118,27 @@ class EquipmentToolsController extends Controller
 
                 continue;
             }
-            $row = array_map(fn ($value) => trim($value ?? ''), array_combine($headers, $columns));
+            if ($roundTrip) {
+                $decoded = array_map(fn ($value) => str_starts_with($value ?? '', 'b64:')
+                    ? base64_decode(substr($value, 4), true) : false, $columns);
+                if (in_array(false, $decoded, true) || ! mb_check_encoding($decoded, 'UTF-8')) {
+                    $errors[] = "Row {$line}: invalid round-trip encoding.";
+
+                    continue;
+                }
+                [$name, $serial, $json] = $decoded;
+                $labels = json_decode($json, true);
+                if (! is_array($labels) || ! array_is_list($labels)
+                    || collect($labels)->contains(fn ($label) => ! is_string($label) || trim($label) === '')) {
+                    $errors[] = "Row {$line}: invalid round-trip tag list.";
+
+                    continue;
+                }
+                $row = ['name' => $name, 'serial_number' => $serial, 'tag_names' => $labels];
+            } else {
+                $row = array_map(fn ($value) => trim($value ?? ''), array_combine($headers, $columns));
+                $row['tag_names'] = array_filter(array_map('trim', explode('|', $row['tags'] ?? '')), fn ($tag) => $tag !== '');
+            }
             $validator = Validator::make($row, [
                 'name' => ['required', 'string', 'max:150', 'not_regex:/[\x00-\x1F\x7F]/'],
                 'serial_number' => ['required', 'string', 'max:100', 'not_regex:/[\x00-\x1F\x7F]/'],
@@ -114,11 +147,12 @@ class EquipmentToolsController extends Controller
             foreach ($validator->errors()->all() as $error) {
                 $errors[] = "Row {$line}: {$error}";
             }
-            if (isset($seen[$row['serial_number']])) {
+            $row['serial_key'] = mb_strtolower($row['serial_number'], 'UTF-8');
+            if (isset($seen[$row['serial_key']])) {
                 $errors[] = "Row {$line}: duplicate serial number {$row['serial_number']} in this file.";
             }
-            $seen[$row['serial_number']] = true;
-            $row['tag_names'] = array_values(array_unique(array_filter(array_map('trim', explode('|', $row['tags'] ?? '')), fn ($tag) => $tag !== '')));
+            $seen[$row['serial_key']] = true;
+            $row['tag_names'] = array_values(array_unique($row['tag_names']));
             if (count($row['tag_names']) > 20 || collect($row['tag_names'])->contains(fn ($tag) => mb_strlen($tag) > 100)) {
                 $errors[] = "Row {$line}: use at most 20 tag names of up to 100 characters.";
             }
@@ -129,11 +163,12 @@ class EquipmentToolsController extends Controller
         if ($rows === []) {
             $errors[] = 'The CSV must contain at least one equipment row.';
         }
-        $existingSerials = Equipment::whereIn('serial_number', array_column($rows, 'serial_number'))->pluck('serial_number')->flip();
+        $existingSerials = Equipment::whereIn(DB::raw('LOWER(serial_number)'), array_column($rows, 'serial_key'))
+            ->pluck('serial_number')->map(fn ($serial) => mb_strtolower($serial, 'UTF-8'))->flip();
         $tagNames = collect($rows)->flatMap(fn ($row) => $row['tag_names'])->unique();
         $tags = Tag::whereIn('name', $tagNames)->pluck('id', 'name');
         foreach ($rows as $row) {
-            if ($existingSerials->has($row['serial_number'])) {
+            if ($existingSerials->has($row['serial_key'])) {
                 $errors[] = "Row {$row['line']}: serial number {$row['serial_number']} already exists.";
             }
             foreach ($row['tag_names'] as $tag) {
@@ -154,7 +189,7 @@ class EquipmentToolsController extends Controller
                 }
             });
         } catch (UniqueConstraintViolationException $exception) {
-            throw ValidationException::withMessages(['file' => 'A serial number was added while importing. Check the file and try again; no rows were imported.']);
+            throw ValidationException::withMessages(['file' => 'A serial number conflicts with an existing or imported item. Check the file; no rows were imported.']);
         }
 
         return back()->with('status', count($rows).' equipment items imported into your laboratory.');

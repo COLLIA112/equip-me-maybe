@@ -32,17 +32,22 @@ class AvailabilityNotifier
 
                 return;
             }
-            foreach (DB::table('wishlists')->where('equipment_id', $equipment->id)->whereNull('notified_at')->get() as $wishlist) {
-                $borrower = User::find($wishlist->user_id);
-                if ($borrower?->isBorrower()) {
-                    NotificationDispatcher::once($borrower, "availability:{$wishlist->id}:{$wishlist->availability_cycle}", [
-                        'kind' => 'availability', 'title' => 'Wishlist item available',
-                        'message' => $equipment->name.' is free now. Availability is checked again when you reserve.',
-                        'url' => route('equipment.show', $equipment, false), 'equipment_id' => $equipment->id,
-                    ]);
-                }
-                DB::table('wishlists')->where('id', $wishlist->id)->update(['notified_at' => now(), 'updated_at' => now()]);
-            }
+            DB::table('wishlists')->where('equipment_id', $equipment->id)->whereNull('notified_at')
+                ->chunkById(100, function ($wishlists) use ($equipment) {
+                    $borrowers = User::whereKey($wishlists->pluck('user_id')->all())->get()->keyBy('id');
+                    foreach ($wishlists as $wishlist) {
+                        $borrower = $borrowers->get($wishlist->user_id);
+                        if ($borrower?->isBorrower()) {
+                            NotificationDispatcher::once($borrower, "availability:{$wishlist->id}:{$wishlist->availability_cycle}", [
+                                'kind' => 'availability', 'title' => 'Wishlist item available',
+                                'message' => $equipment->name.' is free now. Availability is checked again when you reserve.',
+                                'url' => route('equipment.show', $equipment, false), 'equipment_id' => $equipment->id,
+                            ]);
+                        }
+                    }
+                    DB::table('wishlists')->whereIn('id', $wishlists->pluck('id'))
+                        ->update(['notified_at' => now(), 'updated_at' => now()]);
+                });
         }, 3);
     }
 }

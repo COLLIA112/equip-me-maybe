@@ -43,39 +43,39 @@ class Reservation extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'approved_by')->withTrashed();
     }
 
     public function handoverManager(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'handed_over_by');
+        return $this->belongsTo(User::class, 'handed_over_by')->withTrashed();
     }
 
     public function returnManager(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'returned_by');
+        return $this->belongsTo(User::class, 'returned_by')->withTrashed();
     }
 
     public function rejector(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'rejected_by');
+        return $this->belongsTo(User::class, 'rejected_by')->withTrashed();
     }
 
     public function canceller(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'cancelled_by');
+        return $this->belongsTo(User::class, 'cancelled_by')->withTrashed();
     }
 
     public function canReserveAgain(User $user): bool
     {
         return $user->isBorrower() && $this->user_id === $user->id
             && in_array($this->status, [ReservationStatus::Returned, ReservationStatus::Rejected, ReservationStatus::Cancelled], true)
-            && $this->ends_at->isPast();
+            && ($this->status !== ReservationStatus::Returned || $this->ends_at->isPast());
     }
 
     public function isOverdue(): bool
@@ -104,7 +104,9 @@ class Reservation extends Model
     /** Is this checkout authorized right now? (checked_out AND now between start and end) */
     public function isAuthorizedNow(): bool
     {
+        $now = now();
+
         return $this->status === ReservationStatus::CheckedOut
-            && now()->betweenIncluded($this->starts_at, $this->ends_at);
+            && $now->gte($this->starts_at) && $now->lt($this->ends_at);
     }
 }

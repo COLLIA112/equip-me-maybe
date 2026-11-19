@@ -91,15 +91,24 @@ class DocumentController extends Controller
         // Private disk (storage/app/private): not reachable by pasting a URL.
         $path = $file->store('documents', 'local');
 
-        $equipment->documents()->create([
-            'type' => $request->input('type'),
-            'title' => $request->input('title'),
-            'file_path' => $path,
-            'original_name' => $file->getClientOriginalName(),
-            'is_required' => $request->boolean('is_required'),
-        ]);
+        try {
+            DB::transaction(function () use ($equipment, $request, $file, $path) {
+                $equipment = Equipment::whereKey($equipment->id)->lockForUpdate()->firstOrFail();
+                $this->authorize('create', [Document::class, $equipment]);
+                $equipment->documents()->create([
+                    'type' => $request->input('type'),
+                    'title' => $request->input('title'),
+                    'file_path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                    'is_required' => $request->boolean('is_required'),
+                ]);
+                ActivityRecorder::record('document.uploaded', $request->user(), $equipment, details: ['title' => $request->input('title')]);
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($path);
 
-        ActivityRecorder::record('document.uploaded', $request->user(), $equipment, details: ['title' => $request->input('title')]);
+            throw $exception;
+        }
 
         return back()->with('status', 'Document uploaded.');
     }

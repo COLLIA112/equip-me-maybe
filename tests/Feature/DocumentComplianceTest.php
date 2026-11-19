@@ -61,7 +61,9 @@ class DocumentComplianceTest extends TestCase
 
     public function test_handover_is_blocked_until_required_documents_are_acknowledged(): void
     {
-        $reservation = Reservation::factory()->for($this->item)->for($this->borrower, 'user')->approved()->create();
+        $reservation = Reservation::factory()->for($this->item)->for($this->borrower, 'user')->approved()->create([
+            'starts_at' => now()->subMinute(), 'ends_at' => now()->addHour(),
+        ]);
 
         $this->actingAs($this->manager)
             ->patch(route('reservations.handover', $reservation))

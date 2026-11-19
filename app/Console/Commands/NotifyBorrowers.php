@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Models\Equipment;
+use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Services\AvailabilityNotifier;
 use App\Services\NotificationDispatcher;
+use App\Services\ReservationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -15,10 +17,14 @@ class NotifyBorrowers extends Command
 
     protected $description = 'Create in-app due/overdue reminders and wishlist availability notifications without duplicates';
 
-    public function handle(): int
+    public function handle(ReservationService $reservations): int
     {
         $sent = 0;
         $now = now();
+        Reservation::whereIn('status', [ReservationStatus::Pending, ReservationStatus::Approved])
+            ->where('ends_at', '<=', $now)->eachById(function (Reservation $reservation) use ($reservations) {
+                $reservations->expire($reservation);
+            });
         Reservation::checkedOut()->where('ends_at', '<=', $now->copy()->addHours(2))
             ->with(['equipment', 'user'])->chunkById(100, function ($reservations) use ($now, &$sent) {
                 foreach ($reservations as $reservation) {

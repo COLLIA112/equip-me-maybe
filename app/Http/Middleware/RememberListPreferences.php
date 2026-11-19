@@ -4,9 +4,11 @@ namespace App\Http\Middleware;
 
 use App\Enums\EquipmentStatus;
 use App\Enums\ReservationStatus;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,8 +27,20 @@ class RememberListPreferences
         $preferences = $user->preferences ?? [];
         $remember = $preferences['remember_filters'] ?? true;
         if ($request->query('clear') === '1') {
-            unset($preferences['lists'][$name]);
-            $user->forceFill(['preferences' => $preferences])->save();
+            $updated = DB::transaction(function () use ($user, $name) {
+                $locked = User::whereKey($user->id)->lockForUpdate()->first();
+                if (! $locked) {
+                    return null;
+                }
+                $preferences = $locked->preferences ?? [];
+                unset($preferences['lists'][$name]);
+                $locked->forceFill(['preferences' => $preferences])->save();
+
+                return $preferences;
+            }, 3);
+            if ($updated !== null) {
+                $user->forceFill(['preferences' => $updated])->syncOriginalAttribute('preferences');
+            }
             $request->session()->forget('list_back.'.$user->id.'.'.$name);
 
             return redirect($request->url());
@@ -70,9 +84,22 @@ class RememberListPreferences
         if ($response->isSuccessful()) {
             $saved = array_diff_key($normalized, ['page' => true]);
             if ($remember && ! ($name === 'equipment.index' && isset($normalized['model']))) {
-                $preferences = $user->fresh()->preferences ?? [];
-                $preferences['lists'][$name] = $saved;
-                $user->forceFill(['preferences' => $preferences])->save();
+                $updated = DB::transaction(function () use ($user, $name, $saved) {
+                    $locked = User::whereKey($user->id)->lockForUpdate()->first();
+                    if (! $locked) {
+                        return null;
+                    }
+                    $preferences = $locked->preferences ?? [];
+                    if ($preferences['remember_filters'] ?? true) {
+                        $preferences['lists'][$name] = $saved;
+                        $locked->forceFill(['preferences' => $preferences])->save();
+                    }
+
+                    return $preferences;
+                }, 3);
+                if ($updated !== null) {
+                    $user->forceFill(['preferences' => $updated])->syncOriginalAttribute('preferences');
+                }
             }
             // Only store URLs produced from the local route and normalized filters.
             $request->session()->put('list_back.'.$user->id.'.'.$name,

@@ -165,6 +165,7 @@ class ReservationQualityOfLifeTest extends TestCase
         $this->travelTo(now()->startOfMinute());
         $this->actingAs($manager)->patch(route('reservations.approve', $reservation))->assertSessionHasNoErrors();
         $this->assertEquals(now(), $reservation->fresh()->approved_at);
+        $this->travelTo($reservation->starts_at);
         $this->patch(route('reservations.handover', $reservation))->assertSessionHasNoErrors();
         $this->patch(route('reservations.return', $reservation))->assertSessionHasNoErrors();
         $this->assertDatabaseHas('reservations', ['id' => $reservation->id, 'handed_over_by' => $manager->id, 'returned_by' => $manager->id]);

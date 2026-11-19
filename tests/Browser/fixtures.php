@@ -16,6 +16,16 @@ if (! $app->environment('testing')) {
     throw new RuntimeException('Browser fixtures require APP_ENV=testing and an isolated database.');
 }
 
+if (($argv[1] ?? null) === '--open-handover-window') {
+    $reservation = Reservation::query()->where('status', ReservationStatus::Approved)
+        ->whereHas('equipment', fn ($query) => $query->where('serial_number', 'like', 'QA-LIFE-%'))
+        ->findOrFail((int) ($argv[2] ?? 0));
+    $reservation->update(['starts_at' => now()->subMinute(), 'ends_at' => now()->addHour()]);
+
+    exit;
+}
+
+$lifecycleBorrower = User::factory()->student()->create(['email' => 'lifecycle1@equip.test']);
 $manager = User::whereEmail('manager1@equip.test')->firstOrFail();
 $student = User::whereEmail('student1@equip.test')->firstOrFail();
 $faculty = User::whereEmail('faculty1@equip.test')->firstOrFail();
@@ -25,7 +35,8 @@ foreach (['cancel', 'reject', 'priority', 'active', 'overdue'] as $name) {
     $isActive = in_array($name, ['active', 'overdue']);
     $start = $isActive ? now()->subHours(2) : now()->addDays(2)->setTime(10, 0);
     $end = $name === 'overdue' ? now()->subHour() : ($isActive ? now()->addHour() : $start->copy()->addHour());
-    $res = Reservation::factory()->for($item)->for($student, 'user')->create(['starts_at' => $start, 'ends_at' => $end, 'status' => $isActive ? ReservationStatus::CheckedOut : ReservationStatus::Pending, 'approved_by' => $isActive ? $manager->id : null, 'handed_over_at' => $isActive ? $start : null]);
+    $borrower = $name === 'reject' ? $lifecycleBorrower : $student;
+    $res = Reservation::factory()->for($item)->for($borrower, 'user')->create(['starts_at' => $start, 'ends_at' => $end, 'status' => $isActive ? ReservationStatus::CheckedOut : ReservationStatus::Pending, 'approved_by' => $isActive ? $manager->id : null, 'handed_over_at' => $isActive ? $start : null]);
     if ($isActive) {
         $item->update(['status' => EquipmentStatus::Reserved]);
     }

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AuthTokenController extends Controller
@@ -21,13 +22,15 @@ class AuthTokenController extends Controller
             'device_name' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $token = DB::transaction(function () use ($data) {
+            $user = User::where('email', $data['email'])->lockForUpdate()->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->hasRole(Role::SecurityAuditor)) {
-            throw ValidationException::withMessages(['email' => 'These credentials do not match an auditor account.']);
-        }
+            if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->hasRole(Role::SecurityAuditor)) {
+                throw ValidationException::withMessages(['email' => 'These credentials do not match an auditor account.']);
+            }
 
-        $token = $user->createToken($data['device_name'] ?? 'checkpoint-device', ['checkpoint:verify']);
+            return $user->createToken($data['device_name'] ?? 'checkpoint-device', ['checkpoint:verify']);
+        });
 
         return response()->json([
             'token' => $token->plainTextToken,

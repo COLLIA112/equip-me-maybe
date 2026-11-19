@@ -206,7 +206,8 @@ class RoleRegressionTest extends TestCase
             'handover' => 'checked_out', 'return' => 'returned', 'reject' => 'rejected', 'cancel' => 'cancelled'
         };
         $allowed = $action === 'cancel' ? in_array($role, ['student', 'faculty'], true) : $role === 'lab_manager';
-        $reservation = Reservation::factory()->for($item)->for($user, 'user')->create(['status' => $before]);
+        $window = $action === 'handover' ? ['starts_at' => now()->subMinute(), 'ends_at' => now()->addHour()] : [];
+        $reservation = Reservation::factory()->for($item)->for($user, 'user')->create(['status' => $before] + $window);
         $response = $this->actingAs($user)->patch(route('reservations.'.$action, $reservation));
         if ($allowed) {
             $response->assertSessionHasNoErrors()->assertRedirect();

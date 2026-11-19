@@ -1,5 +1,11 @@
 # Equip Me Maybe bug audit and change record
 
+## Integration on main
+
+The confirmed fixes and 16 runnable regressions are part of this checkout. Run the migrations to enable account history retention and backfill the catalog grouping keys. The SQL catalog groups numbered units while keeping individual cards for standalone items. The reservation limits are 24 hours per booking, a 90-day start horizon, and five open pending requests per borrower. Checkpoint tokens default to 12 hours and use the existing UTC clock.
+
+On the integrated source, PHPUnit reported 455 passed and one MySQL-specific skip. All 112 browser checks and the production build passed. A SQLite upgrade from the previous schema backfilled catalog keys for existing equipment.
+
 ## Scope and verification
 
 The audit used the source extracted with Python from Git commit `dbdda9f` on `test--Ibay`. The app, routes, config, migrations, and test files match `fe11f08`, the grouped-catalog commit. The reachable snapshot has 33 feature-test PHP files, including tests under `tests/Feature/Auth`. The proposed bug fixes were exercised in a disposable checkout. The earlier local catalog and interface commits are recorded at the end.
@@ -698,7 +704,7 @@ public function test_checkpoint_denies_checkout_authorization_at_exact_end_time(
 | `da220ef`, equipment controller, catalog and unit views | Restored availability and wishlist actions, fixed filters and pagination | Individual cards show the equipment state and borrower actions. Numbered items can still be grouped. Pagination carries normalized filters. The earlier local suite passed with 439 tests and one skip. |
 | `f0bae3a`, catalog, workspace layout, booking views and shared styles | Applied the video techniques selected for campus use | Search stays visible with expandable filters. Larger touch targets, keyboard focus restoration, aligned dates/counts, and reserved photo space support students and staff. That local branch passed 439 PHP tests and 112 browser checks. |
 
-The audit patch uses the original PR head as its base. The earlier fixes and design changes are in the separate `/workspace/work/equip-maybe-pr3.patch`. SQL grouping will need to be integrated with the earlier individual-card behavior if both patches are used together.
+The audit patch uses the original PR head as its base. The earlier fixes and design changes are in the separate `/workspace/work/equip-maybe-pr3.patch`. The integrated catalog query uses SQL grouping and retains the individual-card behavior.
 
 ## Missing information
 

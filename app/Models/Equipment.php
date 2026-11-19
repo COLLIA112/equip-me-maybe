@@ -32,6 +32,14 @@ class Equipment extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (Equipment $equipment) {
+            if (! $equipment->exists || $equipment->isDirty('name')) {
+                $model = $equipment->catalogModelName();
+                $equipment->catalog_model_key = self::catalogModelKey($model);
+                $equipment->catalog_is_numbered = $model !== trim($equipment->name);
+            }
+        });
+
         // Every item gets a unique code that the QR label encodes.
         static::creating(function (Equipment $equipment) {
             if (blank($equipment->qr_code)) {
@@ -62,7 +70,17 @@ class Equipment extends Model
 
     public function catalogModelName(): string
     {
-        return preg_replace('/\s+#\d+$/u', '', trim($this->name));
+        return self::normalizeCatalogModel($this->name);
+    }
+
+    public static function normalizeCatalogModel(string $name): string
+    {
+        return preg_replace('/\s+#\d+$/u', '', trim($name));
+    }
+
+    public static function catalogModelKey(string $model): string
+    {
+        return hash('sha256', Str::lower($model));
     }
 
     // ---------- relationships ----------

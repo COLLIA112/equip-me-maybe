@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manage_equipment', fn (User $u) => $u->hasRole(Role::LabManager, Role::DepartmentHead));
 
+        Gate::define('verify_checkpoint', fn (User $u) => $u->hasRole(Role::SecurityAuditor));
         Gate::define('reserve_equipment', fn (User $u) => $u->hasRole(Role::Student, Role::Faculty));
     }
 }

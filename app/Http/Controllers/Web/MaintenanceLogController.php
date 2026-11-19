@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Enums\EquipmentStatus;
+use App\Enums\ReservationStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MaintenanceFilterRequest;
@@ -11,6 +12,7 @@ use App\Models\Equipment;
 use App\Models\MaintenanceLog;
 use App\Services\ActivityRecorder;
 use App\Services\AvailabilityNotifier;
+use App\Services\NotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +68,18 @@ class MaintenanceLogController extends Controller
 
             $equipment->update(['status' => EquipmentStatus::UnderRepair]);
             ActivityRecorder::record('maintenance.reported', $request->user(), $equipment, $active, ['maintenance_log_id' => $log->id, 'repair_cost' => $log->repair_cost]);
+            $equipment->reservations()->where('status', ReservationStatus::Approved)
+                ->where('ends_at', '>', now())->with('user')->eachById(function ($booking) use ($log, $equipment) {
+                    if (! $booking->user?->isBorrower()) {
+                        return;
+                    }
+                    NotificationDispatcher::once($booking->user, "repair:{$log->id}:{$booking->id}", [
+                        'kind' => 'maintenance', 'title' => 'Reserved equipment under repair',
+                        'message' => $equipment->name.' cannot be handed over until the repair is resolved.',
+                        'url' => route('reservations.show', $booking, false),
+                        'reservation_id' => $booking->id, 'equipment_id' => $equipment->id,
+                    ]);
+                });
             AvailabilityNotifier::notify($equipment);
         });
 

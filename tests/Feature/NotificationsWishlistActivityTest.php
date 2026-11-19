@@ -164,6 +164,7 @@ class NotificationsWishlistActivityTest extends TestCase
         $this->actingAs($watcher)->post(route('wishlist.store', $item))->assertSessionHasNoErrors();
         $manager = User::factory()->labManager($item->lab)->create();
         $reservation = Reservation::factory()->for($item)->approved()->create();
+        $this->travelTo($reservation->starts_at);
         app(ReservationService::class)->handOver($reservation, $manager);
         app(ReservationService::class)->markReturned($reservation, $manager);
         $this->assertSame(1, $watcher->notifications()->where('data->kind', 'availability')->count());
