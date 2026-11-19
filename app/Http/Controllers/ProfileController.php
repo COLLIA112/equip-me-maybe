@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -46,11 +49,18 @@ class ProfileController extends Controller
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
+        DB::transaction(function () use ($request) {
+            $user = User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
+            if ($user->reservations()->whereIn('status', ['pending', 'approved', 'checked_out'])->exists()) {
+                throw ValidationException::withMessages([
+                    'password' => 'Resolve your open reservations before deleting your account.',
+                ])->errorBag('userDeletion');
+            }
+            $user->tokens()->delete();
+            $user->delete();
+        }, 3);
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -25,6 +25,22 @@ class CheckpointApiTest extends TestCase
         $this->getJson('/api/reservations/active')->assertForbidden();
     }
 
+    public function test_invalid_code_returns_a_stable_404_without_debug_fields(): void
+    {
+        config(['app.debug' => true]);
+        Sanctum::actingAs(User::factory()->securityAuditor()->create(), ['checkpoint:verify']);
+
+        $this->get('/api/equipment/EQ-DOESNOTEXIST/authorization')
+            ->assertNotFound()
+            ->assertExactJson(['message' => 'Equipment not found.']);
+    }
+
+    public function test_missing_code_does_not_bypass_the_ability_check(): void
+    {
+        Sanctum::actingAs(User::factory()->securityAuditor()->create(), ['different:ability']);
+        $this->getJson('/api/equipment/EQ-DOESNOTEXIST/authorization')->assertForbidden();
+    }
+
     public function test_authorization_endpoint_reports_the_active_checkout(): void
     {
         $item = Equipment::factory()->withActiveReservation()->create(['qr_code' => 'EQ-TEST0001']);

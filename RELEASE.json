@@ -1,0 +1,12 @@
+{
+  "branch": "feature/quality-of-life",
+  "source_commit": "e1d7b5b58bece8e4433fa62ce22a9b25f940733b",
+  "verification": {
+    "phpunit_passed": 439,
+    "concurrency": "MariaDB verified",
+    "browser_passed": 112
+  },
+  "php_dependencies_included": true,
+  "frontend_build_included": true,
+  "environment_or_database_included": false
+}

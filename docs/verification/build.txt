@@ -1,0 +1,18 @@
+
+> build
+> vite build
+
+vite v7.3.8 building client environment for production...
+transforming...
+✓ 66 modules transformed.
+rendering chunks...
+computing gzip size...
+public/build/manifest.json              0.33 kB │ gzip:  0.17 kB
+public/build/assets/app-CDuktkHc.css   57.21 kB │ gzip: 10.14 kB
+public/build/assets/app-BnB2VC1K.js   121.40 kB │ gzip: 43.83 kB
+✓ built in 1.69s
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

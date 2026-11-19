@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => (int) env('CHECKPOINT_TOKEN_TTL_MINUTES', 720),
 
     /*
     |--------------------------------------------------------------------------

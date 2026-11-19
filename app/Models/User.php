@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Role;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +14,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     // role, lab_id and department_id are NOT mass assignable: public registration can never escalate.
     protected $fillable = ['name', 'email', 'password'];
@@ -29,6 +30,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'preferences' => 'array',
         ];
     }
 
@@ -67,6 +69,13 @@ class User extends Authenticatable
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    /** Saved equipment; availability notifications never change booking priority. */
+    public function wishlist(): BelongsToMany
+    {
+        return $this->belongsToMany(Equipment::class, 'wishlists')
+            ->withPivot(['id', 'notified_at', 'availability_cycle'])->withTimestamps();
     }
 
     /** Many to Many with compliance data on the pivot. */

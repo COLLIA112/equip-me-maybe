@@ -16,6 +16,7 @@ class StoreMaintenanceLogRequest extends FormRequest
         return [
             'equipment_id' => ['required', 'exists:equipment,id'],
             'issue' => ['required', 'string', 'max:2000'],
+            'repair_cost' => ['nullable', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'],
         ];
     }
 }

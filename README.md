@@ -1,59 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Equip Me Maybe
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 application for university lab equipment. Students and faculty request equipment and acknowledge safety documents. Lab managers approve requests and record checkout and return. Department heads supervise their own departments, and campus security uses the checkpoint API.
 
-## About Laravel
+## Downloaded ZIP: local demo setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Extract the entire ZIP into a normal writable folder, then open the folder containing `artisan`. The release includes PHP dependencies and compiled frontend assets, so Composer and Node are unnecessary for running the packaged demo when those bundled files are intact. **PHP 8.2 or newer is still required**; the ZIP does not install PHP or XAMPP for you.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Enable the PHP CLI extensions used by Laravel, PHPUnit, file uploads and QR codes: Ctype, DOM/XML/XMLWriter, Fileinfo, GD, Mbstring, OpenSSL, PDO and PDO SQLite. Use `php --ini` to locate the CLI configuration. The setup script reports missing extensions. MySQL/MariaDB additionally needs PDO MySQL.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+For a fresh local SQLite demo on Windows, double-click `setup-demo.bat`, or run this in PowerShell:
 
-## Learning Laravel
+```powershell
+.\setup-demo.bat
+php artisan serve
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+On macOS or Linux:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+sh setup-demo.sh
+php artisan serve
+```
 
-## Laravel Sponsors
+Open http://127.0.0.1:8000 once the server starts. Alternatively, run `setup-demo.bat --serve` or `sh setup-demo.sh --serve` to start the server immediately after setup. The script creates `.env` only if missing, generates a key only if empty, applies new migrations without resetting tables, and seeds **only a newly created SQLite database**. The default demo uses SQLite; XAMPP MySQL does not need to be running for that default.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The package deliberately excludes `.env`, personal credentials, API tokens and an existing database. Demo accounts are generated locally. If your package lacks `vendor/`, setup falls back to `composer install --no-interaction`. If compiled assets are absent, it falls back to `npm ci` and `npm run build`; those fallbacks require Composer or Node 20.19+ / 22.12+ respectively and an internet connection.
 
-### Premium Partners
+## Updating an existing project or database
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Back up the existing database and uploaded files before applying the release. Keep your existing `.env` and application key. Do not overwrite them with the example, and do not run `migrate:fresh` or delete the database.
 
-## Contributing
+```powershell
+php artisan config:clear
+php artisan migrate
+php artisan storage:link
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The release adds migrations; existing migration files are preserved. The setup launchers can also be rerun: they retain environment settings, retain the key, and skip demo seeding for an existing database. Use `--seed-demo` only when you explicitly want the idempotent demo records added to a local existing database. Demo accounts use a known password; do not seed them in production.
 
-## Code of Conduct
+For MySQL/XAMPP, create the database first, retain or edit `.env`, and set your local values:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```dotenv
+APP_NAME="Equip Me Maybe"
+APP_URL=http://127.0.0.1:8000
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=equip_me_maybe
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-## Security Vulnerabilities
+Run `php artisan config:clear` and `php artisan migrate`. For a dedicated local demo database, explicitly run `php artisan db:seed`. If Windows refuses the photo-storage link, enable Windows Developer Mode and retry `php artisan storage:link`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Developer setup from source
 
-## License
+The following is for a fresh source checkout without bundled dependencies. Do not copy the environment file or regenerate a key when updating an existing installation.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+composer install --no-interaction
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+npm ci
+npm run build
+php artisan serve
+```
+
+On PowerShell, replace the copy command with `Copy-Item .env.example .env`. Run `npm run dev` in a second terminal when editing the frontend. The application prevents lazy loading outside production to catch missing eager loads.
+
+## Demo accounts
+
+| Role | Demo email |
+|---|---|
+| Department head | `head1@equip.test` |
+| Lab manager | `manager1@equip.test` |
+| Student | `student1@equip.test` |
+| Faculty | `faculty1@equip.test` |
+| Security auditor | `auditor1@equip.test` |
+
+Password: `password`. `manager1` manages Electronics Lab; `head1` heads Engineering. The security auditor uses the API and receives 403 on authenticated application pages. Seed dates are relative to the first seed, so use a fresh local demo database for current-time checkout demonstrations.
+
+## Verification
+
+```bash
+php artisan test
+npm run build
+```
+
+The standard suite uses an in-memory SQLite database. Its concurrent-approval test skips unless a dedicated MySQL/MariaDB database is configured. The database must be empty or disposable and its name must end in `_test`; the test applies migrations and uses two simultaneous connections.
+
+PowerShell example:
+
+```powershell
+$env:EMM_CONCURRENCY_DATABASE = 'equip_me_maybe_test'
+$env:EMM_CONCURRENCY_HOST = '127.0.0.1'
+$env:EMM_CONCURRENCY_PORT = '3306'
+$env:EMM_CONCURRENCY_USERNAME = 'root'
+$env:EMM_CONCURRENCY_PASSWORD = ''
+php artisan test
+Remove-Item Env:EMM_CONCURRENCY_DATABASE, Env:EMM_CONCURRENCY_HOST, Env:EMM_CONCURRENCY_PORT, Env:EMM_CONCURRENCY_USERNAME, Env:EMM_CONCURRENCY_PASSWORD
+```
+
+Bash equivalent:
+
+```bash
+EMM_CONCURRENCY_DATABASE=equip_me_maybe_test \
+EMM_CONCURRENCY_HOST=127.0.0.1 EMM_CONCURRENCY_PORT=3306 \
+EMM_CONCURRENCY_USERNAME=root EMM_CONCURRENCY_PASSWORD='' php artisan test
+```
+
+Run the full suite and production build after each logical task. A passing build alone does not prove authorization, browser interactions, concurrent locking or external email delivery. Record actual command output, including skips and failures.
+
+- [Quality-of-life phase coverage, role matrix, requirement mapping and limitations](docs/QUALITY_OF_LIFE.md)
+- [Checkpoint API and exact Postman requests](docs/API.md)
+- [Postman collection](docs/Equip-Me-Maybe.postman_collection.json)
+- [Manual checks and demo script](docs/DEMO.md)
+
+## Additional improvements and verification
+
+See [ADDITIONAL_FEATURES.md](docs/ADDITIONAL_FEATURES.md) for the borrower, manager, head and shared additions, role restrictions, scheduler setup, browser runner and target-device checks. Executed release summaries are recorded in [TEST_RESULTS.md](docs/TEST_RESULTS.md).

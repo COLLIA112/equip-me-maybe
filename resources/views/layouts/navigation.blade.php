@@ -1,56 +1,120 @@
+
 @php
     $u = auth()->user();
     $isManager = $u->hasRole(\App\Enums\Role::LabManager);
     $isHead = $u->hasRole(\App\Enums\Role::DepartmentHead);
     $links = [];
+
     if (! $u->hasRole(\App\Enums\Role::SecurityAuditor)) {
-        $links[] = ['Dashboard', route('dashboard'), 'dashboard'];
+        if (! $isHead) {
+            $links[] = ['Dashboard', route('dashboard'), 'dashboard'];
+        }
         $links[] = ['Equipment', route('equipment.index'), 'equipment.*'];
     }
+
     if ($u->isBorrower()) {
-        $links[] = ['My Reservations', route('reservations.index'), 'reservations.index'];
+        $links[] = ['My Reservations', route('reservations.index'), 'reservations.index|reservations.show'];
         $links[] = ['Required Documents', route('documents.checklist'), 'documents.checklist'];
+        if (Route::has('wishlist.index')) {
+            $links[] = ['Wishlist', route('wishlist.index'), 'wishlist.*'];
+        }
     }
+
     if ($isManager) {
         $links[] = ['Reservation Queue', route('reservations.queue'), 'reservations.queue'];
+        if (Route::has('reservations.counter')) {
+            $links[] = ['Handover counter', route('reservations.counter'), 'reservations.counter*'];
+        }
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
     }
+
+    if ($isManager || $isHead) {
+        $links[] = ['Tags', route('tags.index'), 'tags.*'];
+        if (Route::has('equipment.tools.index')) {
+            $links[] = ['Equipment tools', route('equipment.tools.index'), 'equipment.tools.*'];
+        }
+        if (Route::has('lab-closures.index')) {
+            $links[] = ['Lab closures', route('lab-closures.index'), 'lab-closures.*'];
+        }
+    }
+
     if ($isHead) {
-        $links[] = ['Department', route('department.index'), 'department.index'];
+        $links[] = ['Department', route('department.index'), 'department.index|department.breakdowns'];
         $links[] = ['Users and Roles', route('department.users'), 'department.users'];
+        $links[] = ['Laboratories', route('department.labs.index'), 'department.labs.*'];
         $links[] = ['Maintenance', route('maintenance.index'), 'maintenance.*'];
+    }
+
+    if (Route::has('activities.index')) {
+        $links[] = ['Activity history', route('activities.index'), 'activities.*'];
     }
 @endphp
 
-{{-- mobile backdrop --}}
-<div x-show="sidebar" x-cloak @click="sidebar = false" class="fixed inset-0 z-30 bg-black/50 lg:hidden"></div>
+{{-- Mobile backdrop --}}
+<div x-show="sidebar"
+     x-cloak
+     @click="closeMenu()"
+     class="fixed inset-0 z-40 bg-black/50 lg:hidden"
+     aria-hidden="true"></div>
 
 <aside
-    :class="sidebar ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 z-40 w-64 shrink-0 flex flex-col bg-slate-900 text-slate-100 transition-transform lg:static lg:translate-x-0 lg:min-h-screen">
-    <div class="flex items-center justify-between h-14 px-5 border-b border-slate-800">
-        <a href="{{ route('dashboard') }}" class="font-semibold tracking-tight text-white">Equip Me Maybe</a>
-        <button @click="sidebar = false" class="lg:hidden p-1 rounded hover:bg-slate-800" aria-label="Close menu">✕</button>
+    :data-open="sidebar.toString()"
+    class="workspace-sidebar invisible fixed inset-y-0 left-0 z-50 flex max-w-full -translate-x-full flex-col bg-[#10223f] text-white motion-safe:transition-transform motion-safe:duration-200 data-[open=true]:visible data-[open=true]:translate-x-0 lg:visible lg:sticky lg:translate-x-0 print:hidden">
+
+    <div class="flex min-h-16 items-center justify-between gap-2 border-b border-white/10 px-4">
+        <a class="inline-flex min-h-11 items-center rounded-md font-bold tracking-tight lg:text-lg" href="{{ route('dashboard') }}">
+            Equip Me Maybe
+        </a>
+        <button type="button"
+                x-ref="closeMenu"
+                @click="closeMenu()"
+                class="min-h-11 rounded-md border border-slate-500 px-3 text-sm lg:hidden"
+                aria-label="Close navigation">
+            Close
+        </button>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1" aria-label="Main">
-        @foreach ($links as [$label, $url, $pattern])
-            <a href="{{ $url }}"
-               @if (request()->routeIs($pattern)) aria-current="page" @endif
-               class="block px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 {{ request()->routeIs($pattern) ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' }}">
-                {{ $label }}
-            </a>
-        @endforeach
-    </nav>
+    <div id="workspace-navigation"
+         class="flex-1 overflow-y-auto overscroll-y-contain p-4">
 
-    <div class="border-t border-slate-800 px-5 py-4 text-sm">
-        <a href="{{ route('profile.edit') }}" class="block text-slate-200 hover:text-white">
-            {{ $u->name }}
-            <span class="block text-xs text-slate-400">{{ $u->role->label() }}</span>
-        </a>
-        <form method="POST" action="{{ route('logout') }}" class="mt-3">
-            @csrf
-            <button class="text-slate-300 hover:text-white">Log out</button>
-        </form>
+        <nav aria-label="Main navigation"
+             class="space-y-1">
+
+            @foreach ($links as [$label, $url, $pattern])
+                @php
+                    $active = request()->routeIs(...explode('|', $pattern));
+                @endphp
+
+                <a href="{{ $url }}"
+                   @if ($active) aria-current="page" @endif
+                   class="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold {{ $active ? 'bg-blue-700 text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                    {{ $label }}
+                </a>
+            @endforeach
+        </nav>
+
+        <div class="mt-5 border-t border-white/15 pt-4 lg:mt-auto">
+            <div role="img"
+                 class="mb-2 ml-3 flex h-10 w-10 items-center justify-center rounded-full bg-blue-700 text-sm font-bold text-white"
+                 aria-label="{{ $u->name }} initials avatar">
+                {{ collect(preg_split('/\s+/u', trim($u->name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') }}
+            </div>
+
+            <p class="break-words px-3 text-sm font-semibold">{{ $u->name }}</p>
+            <p class="px-3 pb-2 text-xs text-slate-300">{{ $u->role->label() }}</p>
+
+            <a href="{{ route('profile.edit') }}"
+               @if (request()->routeIs('profile.*')) aria-current="page" @endif
+               class="flex min-h-11 items-center rounded-lg px-3 text-sm hover:bg-white/10 {{ request()->routeIs('profile.*') ? 'bg-blue-700' : 'text-slate-200' }}">
+                Profile
+            </a>
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button class="min-h-11 w-full rounded-lg px-3 text-left text-sm text-slate-200 hover:bg-white/10">
+                    Log out
+                </button>
+            </form>
+        </div>
     </div>
 </aside>

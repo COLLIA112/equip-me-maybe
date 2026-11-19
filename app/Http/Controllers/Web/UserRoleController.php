@@ -6,8 +6,10 @@ use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Models\Lab;
 use App\Models\User;
+use App\Services\ActivityRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class UserRoleController extends Controller
@@ -48,11 +50,29 @@ class UserRoleController extends Controller
             ],
         ]);
 
-        // role is not mass assignable on purpose, so set it explicitly.
-        $user->role = Role::from($data['role']);
-        $user->department_id = $head->department_id;
-        $user->lab_id = $user->role === Role::LabManager ? $data['lab_id'] : null;
-        $user->save();
+        $user = DB::transaction(function () use ($user, $head, $data) {
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            abort_if($user->hasRole(Role::DepartmentHead), 403);
+            abort_unless($user->department_id === null || $user->department_id === $head->department_id, 403);
+
+            $before = $user->role;
+            $user->role = Role::from($data['role']);
+            $user->department_id = $head->department_id;
+            $user->lab_id = $user->role === Role::LabManager ? $data['lab_id'] : null;
+            $user->save();
+
+            if ($user->wasChanged('role')) {
+                $user->tokens()->delete();
+            }
+            if ($user->wasChanged(['role', 'department_id', 'lab_id'])) {
+                ActivityRecorder::record('user.role-updated', $head, details: [
+                    'user_id' => $user->id, 'department_id' => $user->department_id,
+                    'lab_id' => $user->lab_id, 'from_role' => $before->value, 'to_role' => $user->role->value,
+                ]);
+            }
+
+            return $user;
+        }, 3);
 
         return back()->with('status', "{$user->name} is now {$user->role->label()}.");
     }
