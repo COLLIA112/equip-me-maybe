@@ -57,8 +57,14 @@ class EquipmentController extends Controller
         $catalog->orderBy($sort, $direction)->orderBy('id')->withAvailability();
 
         $equipment = $showUnits
-            ? $catalog->with('lab.department')->paginate(12)->withQueryString()
+            ? $catalog->with('lab.department')->paginate(12, page: $request->integer('page', 1))
             : $this->paginateCatalogModels($catalog, $request);
+        $equipment->appends($request->except('page'));
+
+        $visibleUnits = $showUnits ? $equipment->getCollection() : $equipment->pluck('unit')->filter();
+        $wishlistIds = $user->isBorrower() && $visibleUnits->isNotEmpty()
+            ? $user->wishlist()->whereIn('equipment.id', $visibleUnits->pluck('id'))->pluck('equipment.id')->all()
+            : [];
 
         return view('equipment.index', [
             'equipment' => $equipment,
@@ -71,7 +77,7 @@ class EquipmentController extends Controller
             'filters' => $filters,
             'sort' => $sort,
             'direction' => $direction,
-            'wishlistIds' => $showUnits && $user->isBorrower() ? $user->wishlist()->pluck('equipment.id')->all() : [],
+            'wishlistIds' => $wishlistIds,
         ]);
     }
 
@@ -136,14 +142,20 @@ class EquipmentController extends Controller
     private function paginateCatalogModels(Builder $catalog, Request $request): LengthAwarePaginator
     {
         $models = $catalog->get()
-            ->groupBy(fn (Equipment $item) => Str::lower($item->catalogModelName()))
+            ->groupBy(function (Equipment $item) {
+                $model = $item->catalogModelName();
+
+                // Group numbered units by model. Standalone items can share a name.
+                return $model === trim($item->name) ? 'unit:'.$item->id : 'model:'.Str::lower($model);
+            })
             ->map(fn ($units) => [
                 'name' => $units->first()->catalogModelName(),
                 'photo_url' => $units->first(fn (Equipment $item) => filled($item->photo_path))?->photo_url,
                 'quantity' => $units->count(),
                 'available' => $units->filter(fn (Equipment $item) => $item->availabilityGlance()['available'])->count(),
+                'unit' => $units->count() === 1 ? $units->first() : null,
             ]);
-        $page = LengthAwarePaginator::resolveCurrentPage();
+        $page = $request->integer('page', 1);
 
         return (new LengthAwarePaginator(
             $models->forPage($page, 12)->values(),
@@ -151,7 +163,7 @@ class EquipmentController extends Controller
             12,
             $page,
             ['path' => $request->url()],
-        ))->withQueryString();
+        ));
     }
 
     public function show(EquipmentCalendarRequest $request, Equipment $equipment)

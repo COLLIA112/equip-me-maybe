@@ -211,6 +211,22 @@ class BorrowerCatalogExtrasTest extends TestCase
         $this->assertNull($student->documents()->find($elsewhere->id)->pivot->acknowledged_at);
     }
 
+    public function test_numbered_model_groups_keep_unit_availability_and_wishlist_actions_in_the_drill_down(): void
+    {
+        $item = Equipment::factory()->create(['name' => 'Studio Camera #1']);
+        $repair = Equipment::factory()->for($item->lab)->underRepair()->create(['name' => 'Studio Camera #2']);
+        $student = User::factory()->student()->create();
+        $student->wishlist()->attach($item);
+
+        $this->actingAs($student)->get(route('equipment.index'))
+            ->assertOk()->assertSee('Quantity: 2')->assertSee('Available: 1')
+            ->assertSee(route('equipment.index', ['model' => 'Studio Camera']));
+        $this->get(route('equipment.index', ['model' => 'Studio Camera']))
+            ->assertOk()->assertSee($item->name)->assertSee($repair->name)
+            ->assertSee('Free now')->assertSee('Under repair')
+            ->assertSee('Remove from wishlist')->assertSee('Save to wishlist');
+    }
+
     public function test_catalog_and_details_show_existing_wishlist_remove_actions(): void
     {
         $item = Equipment::factory()->create();

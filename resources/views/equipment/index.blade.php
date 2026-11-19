@@ -64,18 +64,35 @@
     @else
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($equipment as $group)
-                <a href="{{ route('equipment.index', ['model' => $group['name']] + $modelFilters) }}" class="block overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm hover:shadow">
+                @php
+                    $item = $group['unit'];
+                    $url = $item
+                        ? route('equipment.show', $item)
+                        : route('equipment.index', ['model' => $group['name']] + $modelFilters);
+                @endphp
+                <article class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                     @if ($group['photo_url'])
                         <img src="{{ $group['photo_url'] }}" alt="" class="h-36 w-full object-cover">
                     @else
                         <div class="flex h-36 items-center justify-center bg-slate-100 text-sm text-slate-600">No photo</div>
                     @endif
                     <div class="p-4">
-                        <h2 class="font-medium text-blue-800">{{ $group['name'] }}</h2>
-                        <p class="mt-2 text-sm text-slate-600">Quantity: {{ $group['quantity'] }}</p>
-                        <p class="mt-1 text-sm font-medium text-slate-700">Available: {{ $group['available'] }}</p>
+                        <h2 class="font-medium">
+                            <a href="{{ $url }}" class="text-blue-800 hover:underline">{{ $item?->name ?? $group['name'] }}</a>
+                        </h2>
+                        @if ($item)
+                            <div class="mt-2"><x-availability-glance :equipment="$item" /></div>
+                            @if (auth()->user()->isBorrower())
+                                <div class="mt-2">
+                                    @include('equipment._wishlist-action', ['item' => $item, 'wishlisted' => in_array($item->id, $wishlistIds)])
+                                </div>
+                            @endif
+                        @else
+                            <p class="mt-2 text-sm text-slate-600">Quantity: {{ $group['quantity'] }}</p>
+                            <p class="mt-1 text-sm font-medium text-slate-700">Available: {{ $group['available'] }}</p>
+                        @endif
                     </div>
-                </a>
+                </article>
             @endforeach
         </div>
     @endif
