@@ -12,7 +12,7 @@ document.addEventListener('keydown', (event) => {
     const target = event.target;
     if (target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return;
     const input = document.querySelector('[data-global-search]');
-    if (input) {
+    if (input && !input.closest('[inert]')) {
         event.preventDefault();
         input.focus();
     }
@@ -23,7 +23,7 @@ document.addEventListener('click', (event) => {
     const link = event.target instanceof Element ? event.target.closest('form[data-instant-filters] a') : null;
     if (!link || link.textContent.trim() !== 'Clear filter') return;
     const url = new URL(link.href, location.href);
-    if (url.origin !== location.origin) return;
+    if (url.origin !== location.origin || url.searchParams.has('model')) return;
     url.searchParams.set('clear', '1');
     link.href = url.href;
 });

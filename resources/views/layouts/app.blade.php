@@ -2,7 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ auth()->user()->preferences['theme'] ?? 'system' }}" @class(['dark' => (auth()->user()->preferences['theme'] ?? 'system') === 'dark'])>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Equip Me Maybe') }}</title>
     <script>
@@ -15,26 +15,27 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 antialiased">
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:p-3 print:hidden">
-        Skip to content
-    </a>
-
-    <div x-data="{ sidebar: false }"
-         @keydown.escape.window="sidebar = false"
+<body class="workspace-page bg-slate-50 font-sans text-slate-800 antialiased">
+    <div x-data="workspaceNavigation"
+         @keydown.escape.window="if (sidebar) closeMenu()"
+         @resize.window="resetOnDesktop()"
          class="lg:grid lg:min-h-screen lg:grid-cols-[15rem_minmax(0,1fr)] print:block">
+        <a href="#main-content" :inert="sidebar" class="sr-only focus:not-sr-only focus:fixed focus:left-[calc(1rem+env(safe-area-inset-left,0px))] focus:top-[calc(1rem+env(safe-area-inset-top,0px))] focus:z-50 focus:rounded focus:bg-white focus:p-3 print:hidden">
+            Skip to content
+        </a>
 
         @include('layouts.navigation')
 
-        <div class="min-w-0">
+        <div class="min-w-0" :inert="sidebar">
             {{-- Mobile top bar --}}
-            <div class="lg:hidden flex items-center gap-3 bg-slate-900 text-white px-4 h-14 print:hidden">
+            <div class="flex h-14 items-center gap-3 bg-slate-900 px-4 text-white lg:hidden print:hidden">
                 <button type="button"
-                        @click="sidebar = true"
-                        aria-label="Open menu"
+                        x-ref="openMenu"
+                        @click="openMenu()"
+                        aria-label="Open navigation"
                         aria-controls="workspace-navigation"
                         :aria-expanded="sidebar.toString()"
-                        class="p-2 rounded-md hover:bg-slate-800">
+                        class="inline-grid h-11 w-11 shrink-0 place-items-center rounded-md hover:bg-slate-800">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor"
                          stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M4 6h16M4 12h16M4 18h16"/>

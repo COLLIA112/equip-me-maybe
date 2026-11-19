@@ -79,8 +79,29 @@
 }
 
 @layer components {
+    .workspace-page {
+        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+            env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    }
+
+    .workspace-sidebar {
+        width: calc(15rem + env(safe-area-inset-left, 0px));
+        padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    }
+
+    @screen lg {
+        .workspace-sidebar {
+            top: env(safe-area-inset-top, 0px);
+            width: 15rem;
+            height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+            padding: 0;
+        }
+    }
+
     .page-title {
-        @apply text-xl font-bold tracking-tight text-slate-950 sm:text-2xl;
+        @apply min-w-0 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl;
+        overflow-wrap: anywhere;
+        text-wrap: balance;
     }
 
     .responsive-table {
@@ -96,6 +117,6 @@
     }
 
     .stat-number {
-        @apply mt-1 text-3xl font-bold tracking-tight text-slate-950;
+        @apply mt-1 text-3xl font-bold tabular-nums tracking-tight text-slate-950;
     }
 }

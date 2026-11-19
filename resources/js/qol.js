@@ -4,11 +4,14 @@ function instantFilters() {
         if (form.method.toLowerCase() !== 'get') return;
 
         const key = `equip-filter-focus:${location.pathname}:${index}`;
+        const disclosure = form.querySelector('[data-filter-disclosure]');
+        const canRestoreFocus = (control) => control.matches('[data-filter-search]')
+            || (disclosure?.contains(control) && control.matches('select'));
         let timer;
         const rememberFocus = () => {
             clearTimeout(timer);
             const input = document.activeElement;
-            if (!form.contains(input) || !input.matches('[data-filter-search]')) return;
+            if (!form.contains(input) || !canRestoreFocus(input)) return;
             try {
                 sessionStorage.setItem(key, JSON.stringify({
                     name: input.name,
@@ -32,9 +35,10 @@ function instantFilters() {
             sessionStorage.removeItem(key);
             if (!saved || Date.now() - saved.saved > 15000) return;
             const input = Array.from(form.elements).find((element) => element.name === saved.name);
-            if (!input?.matches('[data-filter-search]') || input.value !== saved.value) return;
+            if (!input || !canRestoreFocus(input) || input.value !== saved.value) return;
+            if (disclosure?.contains(input)) disclosure.open = true;
             input.focus({ preventScroll: true });
-            input.setSelectionRange(saved.start, saved.end);
+            if (input.matches('[data-filter-search]')) input.setSelectionRange(saved.start, saved.end);
         } catch { /* Ignore stale or unavailable browser storage. */ }
     });
 }

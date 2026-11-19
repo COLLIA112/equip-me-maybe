@@ -53,38 +53,32 @@
 {{-- Mobile backdrop --}}
 <div x-show="sidebar"
      x-cloak
-     @click="sidebar = false"
-     class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+     @click="closeMenu()"
+     class="fixed inset-0 z-40 bg-black/50 lg:hidden"
      aria-hidden="true"></div>
 
 <aside
-    :class="sidebar ? 'translate-x-0' : '-translate-x-full'"
-    class="fixed inset-y-0 left-0 z-40 w-60 shrink-0 flex flex-col bg-[#10223f] text-white transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen print:hidden">
+    :data-open="sidebar.toString()"
+    class="workspace-sidebar invisible fixed inset-y-0 left-0 z-50 flex max-w-full -translate-x-full flex-col bg-[#10223f] text-white motion-safe:transition-transform motion-safe:duration-200 data-[open=true]:visible data-[open=true]:translate-x-0 lg:visible lg:sticky lg:translate-x-0 print:hidden">
 
-    {{-- Mobile sidebar header --}}
-    <div class="flex min-h-16 items-center justify-between gap-2 px-4 border-b border-white/10 lg:border-b-0">
-        <a class="font-bold tracking-tight" href="{{ route('dashboard') }}">
+    <div class="flex min-h-16 items-center justify-between gap-2 border-b border-white/10 px-4">
+        <a class="inline-flex min-h-11 items-center rounded-md font-bold tracking-tight lg:text-lg" href="{{ route('dashboard') }}">
             Equip Me Maybe
         </a>
         <button type="button"
-                @click="sidebar = false"
-                class="lg:hidden rounded-md border border-slate-500 px-3 py-2 text-sm"
+                x-ref="closeMenu"
+                @click="closeMenu()"
+                class="min-h-11 rounded-md border border-slate-500 px-3 text-sm lg:hidden"
                 aria-label="Close navigation">
             Close
         </button>
     </div>
 
     <div id="workspace-navigation"
-         class="flex-1 overflow-y-auto p-4">
-
-        <a class="mb-8 hidden px-2 pt-3 text-xl font-bold tracking-tight lg:block"
-           href="{{ route('dashboard') }}">
-            Equip Me Maybe
-        </a>
+         class="flex-1 overflow-y-auto overscroll-y-contain p-4">
 
         <nav aria-label="Main navigation"
-             class="space-y-1"
-             @click="if ($event.target.closest('a')) sidebar = false">
+             class="space-y-1">
 
             @foreach ($links as [$label, $url, $pattern])
                 @php
@@ -93,7 +87,7 @@
 
                 <a href="{{ $url }}"
                    @if ($active) aria-current="page" @endif
-                   class="block rounded-lg px-3 py-2.5 text-sm font-semibold {{ $active ? 'bg-blue-700 text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
+                   class="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold {{ $active ? 'bg-blue-700 text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
                     {{ $label }}
                 </a>
             @endforeach
@@ -111,13 +105,13 @@
 
             <a href="{{ route('profile.edit') }}"
                @if (request()->routeIs('profile.*')) aria-current="page" @endif
-               class="block rounded-lg px-3 py-2 text-sm hover:bg-white/10 {{ request()->routeIs('profile.*') ? 'bg-blue-700' : 'text-slate-200' }}">
+               class="flex min-h-11 items-center rounded-lg px-3 text-sm hover:bg-white/10 {{ request()->routeIs('profile.*') ? 'bg-blue-700' : 'text-slate-200' }}">
                 Profile
             </a>
 
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/10">
+                <button class="min-h-11 w-full rounded-lg px-3 text-left text-sm text-slate-200 hover:bg-white/10">
                     Log out
                 </button>
             </form>

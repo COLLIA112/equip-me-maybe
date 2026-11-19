@@ -28,14 +28,57 @@ async function check(name,fn){try{const details=await fn();results.push({name,st
   const page=contexts[role]?.page;if(!page)continue;
   for(const path of paths){
    await check(role+' desktop '+path,async()=>{await page.setViewportSize({width:1440,height:1000});const r=await page.goto(base+path);assert(r.status()===200,'HTTP '+r.status());assert(await page.locator('nav[aria-label="Main navigation"]').isVisible(),'desktop sidebar hidden');const size=await page.evaluate(()=>({vw:innerWidth,width:document.documentElement.scrollWidth}));assert(size.width<=size.vw+1,'horizontal overflow '+JSON.stringify(size));return size;});
-   await check(role+' 375px '+path,async()=>{await page.setViewportSize({width:375,height:812});await page.goto(base+path);const menu=page.getByRole('button',{name:'Open navigation',exact:true});assert(await menu.isVisible(),'menu button missing');await menu.click();assert(await page.locator('nav[aria-label="Main navigation"]').isVisible(),'menu did not open');await page.keyboard.press('Escape');assert(await page.getByRole('button',{name:'Open navigation',exact:true}).evaluate(el=>document.activeElement===el),'Escape did not return focus');assert(!(await page.locator('nav[aria-label="Main navigation"]').isVisible()),'menu did not close');const size=await page.evaluate(()=>({vw:innerWidth,width:document.documentElement.scrollWidth}));assert(size.width<=size.vw+1,'page horizontal overflow '+JSON.stringify(size));await page.screenshot({path:dir+'/'+role+path.replaceAll('/','-')+'-mobile.png',fullPage:true});return size;});
+   await check(role+' 375px '+path, async () => {
+    await page.setViewportSize({width:375,height:812});
+    await page.goto(base+path);
+    const menu = page.getByRole('button', {name:'Open navigation', exact:true});
+    const nav = page.locator('nav[aria-label="Main navigation"]');
+    const target = await menu.boundingBox();
+    assert(target && target.width >= 44 && target.height >= 44, 'menu target must be at least 44 × 44 px');
+    assert(!await nav.isVisible(), 'closed menu is visible');
+    await menu.click();
+    await nav.waitFor({state:'visible'});
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Close navigation');
+    assert(await page.locator('main').evaluate(el => !!el.closest('[inert]')), 'background remains interactive');
+    await page.keyboard.press('Escape');
+    await nav.waitFor({state:'hidden'});
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'Open navigation');
+    const size = await page.evaluate(() => ({vw:innerWidth, width:document.documentElement.scrollWidth}));
+    assert(size.width <= size.vw+1, 'page horizontal overflow '+JSON.stringify(size));
+    await page.screenshot({path:dir+'/'+role+path.replaceAll('/','-')+'-mobile.png',fullPage:true});
+    return size;
+   });
   }
  }
  if(contexts.auditor){for(const path of ['/dashboard','/profile','/documents/checklist','/equipment'])await check('auditor forbidden '+path,async()=>{const r=await contexts.auditor.page.goto(base+path);assert(r.status()===403,'expected403 actual'+r.status());return {status:r.status()};});}
  const student=contexts.student?.page;
  if(student){
   await student.setViewportSize({width:1440,height:1000});
-  await check('instant select auto-submits GET with selected value',async()=>{await student.goto(base+'/equipment');assert(await student.getByRole('link',{name:'Clear filter',exact:true}).count()===0,'Clear filter shown without active filters');await Promise.all([student.waitForURL(u=>u.searchParams.get('status')==='available'),student.locator('select[name=status]').selectOption('available')]);assert(await student.locator('select[name=status]').inputValue()==='available','selected value not persisted');assert(await student.getByRole('link',{name:'Clear filter',exact:true}).count()===1,'Clear filter absent');assert(await student.locator('form[data-instant-filters]').getAttribute('method')==='GET','not GET form');});
+  await check('catalog filters expand and preserve focus on auto-submit', async () => {
+   await student.goto(base+'/equipment?clear=1');
+   const filters = student.locator('details[data-filter-disclosure]');
+   const status = student.getByLabel('Equipment status');
+   const clear = student.getByRole('link', {name:'Clear filter', exact:true});
+   assert(!await status.isVisible(), 'optional filters are visible by default');
+   assert(await clear.count() === 0, 'Clear filter shown without active filters');
+   await filters.locator('summary').focus();
+   await student.keyboard.press('Enter');
+   await status.focus();
+   await Promise.all([
+    student.waitForURL(url => url.searchParams.get('status') === 'available'),
+    status.selectOption('available'),
+   ]);
+   await student.waitForFunction(() => document.activeElement?.name === 'status');
+   assert(await status.inputValue() === 'available', 'selected value not persisted');
+   assert(await clear.count() === 1, 'Clear filter absent');
+   assert(await student.locator('form[data-instant-filters]').getAttribute('method') === 'GET', 'not GET form');
+   await Promise.all([
+    student.waitForURL(url => url.searchParams.get('status') === ''),
+    status.selectOption(''),
+   ]);
+   await student.waitForFunction(() => document.activeElement?.name === 'status');
+   assert(await status.isVisible(), 'filter panel closed while resetting the focused filter');
+  });
   await check('debounced search retains focus and caret',async()=>{await student.goto(base+'/equipment');const input=student.locator('form[data-instant-filters] [data-filter-search]');await input.fill('QA Browser');await input.evaluate(el=>el.setSelectionRange(4,4));await student.waitForURL(u=>u.searchParams.get('q')==='QA Browser');await student.waitForLoadState('networkidle');const focus=await student.locator('form[data-instant-filters] [data-filter-search]').evaluate(el=>({focused:document.activeElement===el,start:el.selectionStart,value:el.value}));assert(focus.focused,'focus lost after debounce');assert(focus.start===4,'caret not restored '+JSON.stringify(focus));return focus;});
   await check('Clear filter clears query and conditional link',async()=>{await Promise.all([student.waitForURL(u=>u.pathname==='/equipment'&&!u.search),student.getByRole('link',{name:'Clear filter',exact:true}).click()]);assert(await student.getByRole('link',{name:'Clear filter',exact:true}).count()===0,'clear link still visible');});
   await check('reservation default end and manual end preservation',async()=>{const r=await student.goto(base+'/equipment/1/reserve');assert(r.status()===200,'reserve HTTP'+r.status());const start=student.locator('[name=starts_at]'),end=student.locator('[name=ends_at]');assert(await start.getAttribute('min'),'past-date minimum missing');const time=new Date(Date.now()+10*86400000);time.setUTCHours(10,0,0,0);const str=d=>d.toISOString().slice(0,16);await start.fill(str(time));assert(await end.inputValue()===str(new Date(time.getTime()+3600000)),'end not start+1h');await end.fill(str(new Date(time.getTime()+7200000)));time.setUTCHours(9);await start.fill(str(time));assert(await end.inputValue()===str(new Date(time.getTime()+10800000)),'manual end overwritten');return {minimum:await start.getAttribute('min'),start:await start.inputValue(),end:await end.inputValue()};});

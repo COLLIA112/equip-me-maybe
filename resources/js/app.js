@@ -7,6 +7,26 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 
+Alpine.data('workspaceNavigation', () => ({
+    sidebar: false,
+
+    openMenu() {
+        this.sidebar = true;
+        this.$nextTick(() => this.$refs.closeMenu.focus());
+    },
+
+    closeMenu() {
+        this.sidebar = false;
+        this.$nextTick(() => this.$refs.openMenu.focus());
+    },
+
+    resetOnDesktop() {
+        if (this.sidebar && this.$refs.openMenu.offsetWidth === 0) {
+            this.sidebar = false;
+        }
+    },
+}));
+
 Alpine.data('confirmation', () => ({
     dialog: null,
     form: null,
