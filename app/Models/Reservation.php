@@ -18,7 +18,7 @@ class Reservation extends Model
         'status', 'handed_over_at', 'returned_at', 'is_class_session',
         'rejection_reason', 'approved_at', 'handed_over_by', 'returned_by',
         'rejected_by', 'rejected_at', 'cancelled_by', 'cancelled_at',
-        'return_condition', 'return_notes',
+        'return_condition', 'return_notes', 'cancellation_reason'
     ];
 
     protected function casts(): array
