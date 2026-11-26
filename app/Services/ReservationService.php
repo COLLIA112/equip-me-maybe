@@ -147,7 +147,7 @@ class ReservationService
 
     public function cancel(Reservation $reservation, ?User $actor = null, ?string $reason = null): Reservation
     {
-        return DB::transaction(function () use ($reservation, $actor) {
+        return DB::transaction(function () use ($reservation, $actor, $reason) {
             $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
             $reservation->refresh();
 
