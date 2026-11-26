@@ -11,6 +11,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Enums\ReservationStatus;
+use Illuminate\Validation\ValidationException;
 
 class UserRoleController extends Controller
 {
@@ -55,6 +57,14 @@ class UserRoleController extends Controller
             abort_if($user->hasRole(Role::DepartmentHead), 403);
             abort_unless($user->department_id === null || $user->department_id === $head->department_id, 403);
 
+            if (! in_array($data['role'], ['student', 'faculty'], true)
+                && $user->reservations()->whereIn('status', [
+                ReservationStatus::Pending, ReservationStatus::Approved, ReservationStatus::CheckedOut,
+                ])->exists()) {
+                    throw ValidationException::withMessages([
+                    'role' => "{$user->name} has open reservations. Resolve them before changing this role.",
+                ]);
+                }
             $before = $user->role;
             $user->role = Role::from($data['role']);
             $user->department_id = $head->department_id;

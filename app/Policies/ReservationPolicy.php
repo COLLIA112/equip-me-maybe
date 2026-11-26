@@ -34,6 +34,17 @@ class ReservationPolicy
     {
         $reservation->loadMissing('equipment');
 
-        return $user->managesLab($reservation->equipment->lab_id);
+        // Nobody processes their own booking.
+        return $user->id !== $reservation->user_id
+            && $user->managesLab($reservation->equipment->lab_id);
+    }
+
+    public function revoke(User $user, Reservation $reservation): bool
+    {
+    $reservation->loadMissing('equipment');
+
+    return $reservation->status === ReservationStatus::Approved
+        && $user->id !== $reservation->user_id
+        && $user->managesLab($reservation->equipment->lab_id);
     }
 }
