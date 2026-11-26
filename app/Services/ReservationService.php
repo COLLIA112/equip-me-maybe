@@ -55,9 +55,19 @@ class ReservationService
             abort_unless($user->isBorrower(), 403);
             $pending = $user->reservations()->where('status', ReservationStatus::Pending)
                 ->where('ends_at', '>', now())->lockForUpdate()->pluck('id');
+
             if ($pending->count() >= 5) {
                 throw ValidationException::withMessages(['starts_at' => 'Resolve a pending request before making another.']);
             }
+
+            if ($user->reservations()
+                ->where('equipment_id', $equipment->id)
+                ->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Approved, ReservationStatus::CheckedOut])
+                ->overlapping($start, $end)->exists()) {
+                throw ValidationException::withMessages([
+                    'starts_at' => 'You already have a reservation for this item that overlaps these times.',
+                    ]);
+                }
 
             $isClassSession = $isClassSession && $user->hasRole(Role::Faculty);
             if ($isClassSession) {
@@ -135,7 +145,7 @@ class ReservationService
         });
     }
 
-    public function cancel(Reservation $reservation, ?User $actor = null): Reservation
+    public function cancel(Reservation $reservation, ?User $actor = null, ?string $reason = null): Reservation
     {
         return DB::transaction(function () use ($reservation, $actor) {
             $equipment = Equipment::whereKey($reservation->equipment_id)->lockForUpdate()->firstOrFail();
@@ -149,6 +159,7 @@ class ReservationService
                 'status' => ReservationStatus::Cancelled,
                 'cancelled_by' => $actor?->id,
                 'cancelled_at' => now(),
+                'cancellation_reason' => $reason,
             ]);
 
             $this->recordChange('cancelled', $actor, $equipment, $reservation);
