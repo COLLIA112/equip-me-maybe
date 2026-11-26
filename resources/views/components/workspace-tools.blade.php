@@ -22,7 +22,7 @@
         @if ($routeName !== 'equipment.index' || request()->filled('model'))
             <form method="GET" action="{{ route('equipment.index') }}" role="search" aria-label="All equipment" class="flex min-w-0 flex-1 gap-2 sm:max-w-md">
                 <label for="global-search" class="sr-only">Search equipment by name, serial or code</label>
-                <input id="global-search" data-global-search type="search" name="q" placeholder="Search equipment · /" maxlength="150" class="min-h-11 min-w-0 w-full rounded-md border-slate-300 text-base sm:text-sm" aria-keyshortcuts="/">
+                <input id="global-search" data-global-search type="search" name="q" placeholder="Search equipment · Alt + /" maxlength="150" class="min-h-11 min-w-0 w-full rounded-md border-slate-300 text-base sm:text-sm" aria-keyshortcuts="Alt+/">
                 <button type="submit" class="min-h-11 rounded-md bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800">Search</button>
             </form>
         @endif

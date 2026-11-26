@@ -1,85 +1,283 @@
-// GET filters stay independent from the POST confirmation/submitting handler.
-function instantFilters() {
-    document.querySelectorAll('form[data-instant-filters]').forEach((form, index) => {
-        if (form.method.toLowerCase() !== 'get') return;
 
-        const key = `equip-filter-focus:${location.pathname}:${index}`;
-        const disclosure = form.querySelector('[data-filter-disclosure]');
-        const canRestoreFocus = (control) => control.matches('[data-filter-search]')
-            || (disclosure?.contains(control) && control.matches('select'));
-        let timer;
-        const rememberFocus = () => {
-            clearTimeout(timer);
-            const input = document.activeElement;
-            if (!form.contains(input) || !canRestoreFocus(input)) return;
-            try {
-                sessionStorage.setItem(key, JSON.stringify({
-                    name: input.name,
-                    value: input.value,
-                    start: input.selectionStart,
-                    end: input.selectionEnd,
-                    saved: Date.now(),
-                }));
-            } catch { /* Filters also work when browser storage is unavailable. */ }
+// ==========================================
+// EQUIP ME MAYBE
+// Quality of Life and Accessibility
+// ==========================================
+
+// GET filters remain independent from POST
+// confirmation and submission handlers.
+
+function instantFilters() {
+
+    document.querySelectorAll(
+        'form[data-instant-filters]'
+    ).forEach((form, index) => {
+
+        if (form.method.toLowerCase() !== 'get') {
+            return;
+        }
+
+        const key =
+            `equip-filter-focus:${location.pathname}:${index}`;
+
+        const disclosure = form.querySelector(
+            '[data-filter-disclosure]'
+        );
+
+        const canRestoreFocus = (control) => {
+
+            if (!(control instanceof Element)) {
+                return false;
+            }
+
+            return control.matches('[data-filter-search]')
+                || (
+                    disclosure?.contains(control)
+                    && control.matches('select')
+                );
+
         };
-        form.addEventListener('submit', rememberFocus);
-        form.querySelectorAll('[data-filter-search]').forEach((input) => {
-            input.addEventListener('input', () => {
+
+        let timer;
+
+        // Remember the focused filter before submission.
+
+        const rememberFocus = () => {
+
+            clearTimeout(timer);
+
+            const input = document.activeElement;
+
+            if (
+                !form.contains(input)
+                || !canRestoreFocus(input)
+            ) {
+                return;
+            }
+
+            try {
+
+                sessionStorage.setItem(
+                    key,
+                    JSON.stringify({
+                        name: input.name,
+                        value: input.value,
+                        start: input.selectionStart,
+                        end: input.selectionEnd,
+                        saved: Date.now(),
+                    })
+                );
+
+            } catch {
+
+                // Filters remain usable without browser storage.
+
+            }
+
+        };
+
+        form.addEventListener(
+            'submit',
+            rememberFocus
+        );
+
+        // Search after the user finishes typing.
+
+        form.querySelectorAll(
+            '[data-filter-search]'
+        ).forEach((input) => {
+
+            let composing = false;
+
+            const scheduleSearch = () => {
+
                 clearTimeout(timer);
-                timer = setTimeout(() => form.requestSubmit(), 400);
-            });
+
+                if (composing) {
+                    return;
+                }
+
+                timer = setTimeout(() => {
+
+                    // Avoid unexpected submission when the
+                    // user has already moved to another field.
+
+                    if (document.activeElement === input) {
+                        form.requestSubmit();
+                    }
+
+                }, 600);
+
+            };
+
+            input.addEventListener(
+                'compositionstart',
+                () => {
+
+                    composing = true;
+
+                    clearTimeout(timer);
+
+                }
+            );
+
+            input.addEventListener(
+                'compositionend',
+                () => {
+
+                    composing = false;
+
+                    scheduleSearch();
+
+                }
+            );
+
+            input.addEventListener(
+                'input',
+                scheduleSearch
+            );
+
+            input.addEventListener(
+                'blur',
+                () => clearTimeout(timer)
+            );
+
         });
 
+        // Restore keyboard focus after filter submission.
+
         try {
-            const saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+
+            const saved = JSON.parse(
+                sessionStorage.getItem(key) || 'null'
+            );
+
             sessionStorage.removeItem(key);
-            if (!saved || Date.now() - saved.saved > 15000) return;
-            const input = Array.from(form.elements).find((element) => element.name === saved.name);
-            if (!input || !canRestoreFocus(input) || input.value !== saved.value) return;
-            if (disclosure?.contains(input)) disclosure.open = true;
-            input.focus({ preventScroll: true });
-            if (input.matches('[data-filter-search]')) input.setSelectionRange(saved.start, saved.end);
-        } catch { /* Ignore stale or unavailable browser storage. */ }
+
+            if (
+                !saved
+                || Date.now() - saved.saved > 15000
+            ) {
+                return;
+            }
+
+            const input = Array.from(
+                form.elements
+            ).find(
+                (element) => element.name === saved.name
+            );
+
+            if (
+                !input
+                || !canRestoreFocus(input)
+                || input.value !== saved.value
+                || input.disabled
+            ) {
+                return;
+            }
+
+            if (disclosure?.contains(input)) {
+
+                disclosure.open = true;
+
+            }
+
+            input.focus({
+                preventScroll: true,
+            });
+
+            if (
+                input.matches('[data-filter-search]')
+                && typeof input.setSelectionRange === 'function'
+                && Number.isInteger(saved.start)
+                && Number.isInteger(saved.end)
+            ) {
+
+                input.setSelectionRange(
+                    saved.start,
+                    saved.end
+                );
+
+            }
+
+        } catch {
+
+            // Ignore unavailable or outdated browser storage.
+
+        }
+
     });
+
 }
+
+
+// ==========================================
+// Accessible Flash Notifications
+// ==========================================
 
 function flashMessages() {
-    document.querySelectorAll('[data-flash]').forEach((flash) => {
-        let remaining = 8000;
-        let started;
-        let timer;
-        let hovered = false;
+
+    document.querySelectorAll(
+        '[data-flash]'
+    ).forEach((flash) => {
+
+        const dismissButton = flash.querySelector(
+            '[data-dismiss-flash]'
+        );
+
         const dismiss = () => {
-            clearTimeout(timer);
+
+            // Restore focus before hiding a focused notification.
+
             if (flash.contains(document.activeElement)) {
-                document.querySelector('#main-content')?.focus({ preventScroll: true });
+
+                document.querySelector(
+                    '#main-content'
+                )?.focus({
+                    preventScroll: true,
+                });
+
             }
+
             flash.hidden = true;
+
         };
-        const pause = () => {
-            clearTimeout(timer);
-            if (started) remaining = Math.max(0, remaining - (Date.now() - started));
-            started = null;
-        };
-        const resume = () => {
-            if (hovered || flash.contains(document.activeElement) || flash.hidden) return;
-            clearTimeout(timer);
-            started = Date.now();
-            timer = setTimeout(dismiss, remaining);
-        };
-        flash.addEventListener('mouseenter', () => { hovered = true; pause(); });
-        flash.addEventListener('mouseleave', () => { hovered = false; resume(); });
-        flash.addEventListener('focusin', pause);
-        flash.addEventListener('focusout', () => setTimeout(resume, 0));
-        flash.querySelector('[data-dismiss-flash]')?.addEventListener('click', dismiss);
-        resume();
+
+        dismissButton?.addEventListener(
+            'click',
+            dismiss
+        );
+
+        // Notifications remain visible until dismissed.
+        // This allows users enough time to read messages.
+
     });
+
 }
+
+
+// ==========================================
+// Initialization
+// ==========================================
 
 function initialize() {
+
     instantFilters();
+
     flashMessages();
+
 }
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true });
-else initialize();
+if (document.readyState === 'loading') {
+
+    document.addEventListener(
+        'DOMContentLoaded',
+        initialize,
+        { once: true }
+    );
+
+} else {
+
+    initialize();
+
+}
