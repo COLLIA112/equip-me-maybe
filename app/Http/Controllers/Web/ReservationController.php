@@ -21,6 +21,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\RevokeReservationRequest;
 
 class ReservationController extends Controller
 {
@@ -228,5 +229,12 @@ class ReservationController extends Controller
             default => 'reservations.starts_at',
         };
         $query->orderBy($column, $filters['direction'] ?? $defaultDirection)->orderBy('reservations.id', $filters['direction'] ?? $defaultDirection);
+    }
+
+    public function revoke(RevokeReservationRequest $request, Reservation $reservation): RedirectResponse
+    {
+        $this->service->cancel($reservation, $request->user(), $request->validated('cancellation_reason'));
+
+        return back()->with('status', 'Reservation #'.$reservation->id.' cancelled and the borrower notified.');
     }
 }

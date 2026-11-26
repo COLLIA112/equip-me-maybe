@@ -72,6 +72,11 @@
                             @elseif ($r->status === \App\Enums\ReservationStatus::Approved)
                                 <form method="POST" action="{{ route('reservations.handover', $r) }}">@csrf @method('PATCH')
                                     <button @disabled(! $ok) aria-describedby="compliance-{{ $r->id }}" class="rounded bg-blue-600 px-3 py-1 text-white disabled:cursor-not-allowed disabled:opacity-40">Hand over</button></form>
+                                    <form method="POST" action="{{ route('reservations.revoke', $r) }}" data-confirm="Cancel this approved booking?">
+                                        @csrf @method('PATCH')
+                                        <input name="cancellation_reason" required minlength="5" maxlength="1000" placeholder="Reason" class="rounded-md border-slate-300 text-sm">
+                                        <button class="text-red-600 hover:underline">Cancel booking</button>
+                                    </form>
                             @elseif ($r->status === \App\Enums\ReservationStatus::CheckedOut)
                                 <form method="POST" action="{{ route('reservations.return', $r) }}" data-confirm="Record this item as returned?">@csrf @method('PATCH')
                                     @include('reservations._return-condition')

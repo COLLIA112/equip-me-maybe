@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class ProfileController extends Controller
 {
@@ -57,6 +58,7 @@ class ProfileController extends Controller
                 ])->errorBag('userDeletion');
             }
             $user->tokens()->delete();
+            $user->forceFill(['email' => 'deleted-'.$user->id.'-'.Str::lower(Str::random(6)).'@deleted.invalid'])->save();
             $user->delete();
         }, 3);
 
