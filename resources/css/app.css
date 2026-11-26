@@ -1,17 +1,55 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================
+   EQUIP ME MAYBE - GLOBAL DESIGN SYSTEM
+   ========================================= */
+
+:root {
+    --ui-background: #f1f5f9;
+    --ui-surface: #ffffff;
+    --ui-border: #cbd5e1;
+    --ui-text: #0f172a;
+    --ui-muted: #475569;
+    --ui-primary: #1d4ed8;
+    --ui-focus: #1d4ed8;
+    --ui-sidebar: #111e34;
+    --ui-radius: 12px;
+    --ui-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+html.dark {
+    color-scheme: dark;
+
+    --ui-background: #0f172a;
+    --ui-surface: #1e293b;
+    --ui-border: #475569;
+    --ui-text: #f8fafc;
+    --ui-muted: #cbd5e1;
+    --ui-primary: #2563eb;
+    --ui-focus: #93c5fd;
+    --ui-sidebar: #111e34;
+    --ui-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================
+   BASE STYLES AND ACCESSIBILITY
+   ========================================= */
+
 @layer base {
-    [x-cloak] { display: none !important; }
+    [x-cloak] {
+        display: none !important;
+    }
 
     :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-        outline: 2px solid #2563eb;
+        outline: 3px solid var(--ui-focus);
         outline-offset: 3px;
     }
 
     aside :is(a, button):focus-visible {
-        outline-color: #93c5fd;
+        outline-color: #bfdbfe;
     }
 
     button:disabled,
@@ -24,11 +62,14 @@
         pointer-events: none;
     }
 
-    th, td {
+    th,
+    td {
         overflow-wrap: anywhere;
     }
 
-    input, select, textarea {
+    input,
+    select,
+    textarea {
         max-width: 100%;
     }
 
@@ -37,72 +78,224 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
+        *,
+        *::before,
+        *::after {
             scroll-behavior: auto !important;
             animation-duration: 0.01ms !important;
             transition-duration: 0.01ms !important;
         }
     }
 
-    html.dark { color-scheme: dark; }
-    html.dark body { background-color: #0f172a; color: #e2e8f0; }
+    /* Dark theme compatibility */
 
-    /* Keep existing reusable Blade components readable in the saved dark theme. */
-    html.dark :is(.bg-white, .bg-slate-50, .bg-gray-50) { background-color: #111c30; }
-    html.dark :is(.bg-slate-100, .bg-gray-100, .bg-gray-200) { background-color: #1e293b; }
-    html.dark :is(.text-slate-950, .text-slate-900, .text-slate-800, .text-gray-900, .text-gray-800, .text-gray-700) { color: #f1f5f9; }
-    html.dark :is(.text-slate-700, .text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500) { color: #cbd5e1; }
-    html.dark :is(.text-blue-600, .text-blue-700) { color: #93c5fd; }
-    html.dark :is(.border-slate-200, .border-slate-300, .border-gray-200, .border-gray-300) { border-color: #475569; }
-    html.dark :is(input, select, textarea) { background-color: #172338; color: #f1f5f9; border-color: #64748b; }
-    html.dark :is(input, textarea)::placeholder { color: #94a3b8; }
-    html.dark :is(.hover\:bg-slate-50, .hover\:bg-slate-100, .hover\:bg-gray-100):hover { background-color: #273449; }
-    html.dark .bg-green-50 { background-color: #14352b; }
-    html.dark .bg-red-50 { background-color: #421e29; }
-    html.dark .bg-blue-50 { background-color: #142f50; }
-    html.dark .bg-amber-50 { background-color: #3a2b16; }
-    html.dark :is(.text-green-700, .text-green-800, .text-green-900, .text-emerald-700, .text-emerald-800, .text-emerald-900) { color: #86efac; }
-    html.dark :is(.text-red-600, .text-red-700, .text-red-800, .text-red-900) { color: #fca5a5; }
-    html.dark :is(.text-orange-700, .text-orange-800, .text-orange-900, .text-amber-700, .text-amber-800, .text-amber-900) { color: #fcd34d; }
-    /* Status badges retain their semantic colors and sufficient contrast. */
-    html.dark :is(.bg-green-100, .bg-emerald-100) { background-color: #14532d; }
-    html.dark .bg-blue-100 { background-color: #1e3a8a; }
-    html.dark :is(.bg-orange-100, .bg-amber-100) { background-color: #78350f; }
-    html.dark .bg-red-100 { background-color: #7f1d1d; }
-    html.dark :is(.text-blue-800, .text-blue-900) { color: #bfdbfe; }
-    html.dark body.bg-slate-50 { background-color: #0f172a; }
+    html.dark body {
+        background-color: #0f172a;
+        color: #e2e8f0;
+    }
+
+    html.dark :is(.bg-white, .bg-slate-50, .bg-gray-50) {
+        background-color: #111c30;
+    }
+
+    html.dark :is(.bg-slate-100, .bg-gray-100, .bg-gray-200) {
+        background-color: #1e293b;
+    }
+
+    html.dark :is(
+        .text-slate-950,
+        .text-slate-900,
+        .text-slate-800,
+        .text-gray-900,
+        .text-gray-800,
+        .text-gray-700
+    ) {
+        color: #f1f5f9;
+    }
+
+    html.dark :is(
+        .text-slate-700,
+        .text-slate-600,
+        .text-slate-500,
+        .text-gray-600,
+        .text-gray-500
+    ) {
+        color: #cbd5e1;
+    }
+
+    html.dark :is(.text-blue-600, .text-blue-700) {
+        color: #93c5fd;
+    }
+
+    html.dark :is(
+        .border-slate-200,
+        .border-slate-300,
+        .border-gray-200,
+        .border-gray-300
+    ) {
+        border-color: #475569;
+    }
+
+    html.dark :is(input, select, textarea) {
+        background-color: #172338;
+        color: #f1f5f9;
+        border-color: #64748b;
+    }
+
+    html.dark :is(input, textarea)::placeholder {
+        color: #94a3b8;
+    }
+
+    html.dark :is(
+        .hover\:bg-slate-50,
+        .hover\:bg-slate-100,
+        .hover\:bg-gray-100
+    ):hover {
+        background-color: #273449;
+    }
+
+    /* Semantic background colors */
+
+    html.dark .bg-green-50 {
+        background-color: #14352b;
+    }
+
+    html.dark .bg-red-50 {
+        background-color: #421e29;
+    }
+
+    html.dark .bg-blue-50 {
+        background-color: #142f50;
+    }
+
+    html.dark .bg-amber-50 {
+        background-color: #3a2b16;
+    }
+
+    /* Semantic text colors */
+
+    html.dark :is(
+        .text-green-700,
+        .text-green-800,
+        .text-green-900,
+        .text-emerald-700,
+        .text-emerald-800,
+        .text-emerald-900
+    ) {
+        color: #86efac;
+    }
+
+    html.dark :is(
+        .text-red-600,
+        .text-red-700,
+        .text-red-800,
+        .text-red-900
+    ) {
+        color: #fca5a5;
+    }
+
+    html.dark :is(
+        .text-orange-700,
+        .text-orange-800,
+        .text-orange-900,
+        .text-amber-700,
+        .text-amber-800,
+        .text-amber-900
+    ) {
+        color: #fcd34d;
+    }
+
+    /* Status badges */
+
+    html.dark :is(.bg-green-100, .bg-emerald-100) {
+        background-color: #14532d;
+    }
+
+    html.dark .bg-blue-100 {
+        background-color: #1e3a8a;
+    }
+
+    html.dark :is(.bg-orange-100, .bg-amber-100) {
+        background-color: #78350f;
+    }
+
+    html.dark .bg-red-100 {
+        background-color: #7f1d1d;
+    }
+
+    html.dark :is(.text-blue-800, .text-blue-900) {
+        color: #bfdbfe;
+    }
+
+    html.dark body.bg-slate-50 {
+        background-color: #0f172a;
+    }
+
+    /* Preserve print functionality */
 
     @media print {
-        html.dark body { background-color: white !important; }
-        html.dark * { background-color: transparent !important; color: #0f172a !important; border-color: #cbd5e1 !important; box-shadow: none !important; }
+        html.dark body {
+            background-color: white !important;
+        }
+
+        html.dark * {
+            background-color: transparent !important;
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: none !important;
+        }
     }
 }
 
+/* =========================================
+   SHARED COMPONENTS
+   ========================================= */
+
 @layer components {
     .workspace-page {
-        padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-            env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+        padding:
+            env(safe-area-inset-top, 0px)
+            env(safe-area-inset-right, 0px)
+            env(safe-area-inset-bottom, 0px)
+            env(safe-area-inset-left, 0px);
     }
 
     .workspace-sidebar {
         width: calc(15rem + env(safe-area-inset-left, 0px));
-        padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+
+        padding:
+            env(safe-area-inset-top, 0px)
+            0
+            env(safe-area-inset-bottom, 0px)
+            env(safe-area-inset-left, 0px);
     }
 
     @screen lg {
         .workspace-sidebar {
             top: env(safe-area-inset-top, 0px);
             width: 15rem;
-            height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+
+            height: calc(
+                100dvh -
+                env(safe-area-inset-top, 0px) -
+                env(safe-area-inset-bottom, 0px)
+            );
+
             padding: 0;
         }
     }
 
+    /* Page headings */
+
     .page-title {
         @apply min-w-0 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl;
+
         overflow-wrap: anywhere;
         text-wrap: balance;
+        line-height: 1.3;
     }
+
+    /* Responsive tables */
 
     .responsive-table {
         @apply relative max-w-full overflow-x-auto overscroll-x-contain;
@@ -112,6 +305,8 @@
         min-width: 34rem;
     }
 
+    /* Dashboard statistics */
+
     .stat-label {
         @apply text-sm font-semibold text-slate-600;
     }
@@ -119,4 +314,924 @@
     .stat-number {
         @apply mt-1 text-3xl font-bold tabular-nums tracking-tight text-slate-950;
     }
+
+    /* Reusable modern card */
+
+    .ui-card {
+        min-width: 0;
+        background-color: var(--ui-surface);
+        border: 1px solid var(--ui-border);
+        border-radius: var(--ui-radius);
+        box-shadow: var(--ui-shadow);
+        padding: 1.25rem;
+    }
 }
+
+/* =========================================
+   UI/UX VISUAL IMPROVEMENTS
+   ========================================= */
+
+@media screen {
+
+    /* Main workspace */
+
+    body.workspace-page,
+    html.dark body.workspace-page {
+        background-color: var(--ui-background);
+        color: var(--ui-text);
+        line-height: 1.6;
+    }
+
+    /* Improved typography */
+
+    .page-title,
+    html.dark .page-title {
+        color: var(--ui-text);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.3;
+    }
+
+    .stat-label,
+    html.dark .stat-label {
+        color: var(--ui-muted);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+
+    .stat-number,
+    html.dark .stat-number {
+        color: var(--ui-text);
+        font-size: clamp(1.75rem, 3vw, 2rem);
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    /* Sidebar */
+
+    .workspace-sidebar {
+        background-color: var(--ui-sidebar);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .workspace-sidebar nav a {
+        gap: 0.75rem;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+
+    .workspace-sidebar nav a[aria-current="page"] {
+        background-color: #1d4ed8;
+        color: #ffffff;
+        font-weight: 600;
+        box-shadow: inset 3px 0 0 #bfdbfe;
+    }
+
+    .workspace-sidebar nav a:not([aria-current="page"]):hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Visible keyboard focus */
+
+    :is(
+        a,
+        button,
+        input,
+        select,
+        textarea,
+        summary,
+        [tabindex]
+    ):focus-visible {
+        outline: 3px solid var(--ui-focus);
+        outline-offset: 3px;
+    }
+
+    .workspace-sidebar :is(a, button):focus-visible {
+        outline-color: #bfdbfe;
+    }
+
+    /* Form fields */
+
+    :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"]):not([type="color"]):not([type="file"]),
+    select,
+    textarea
+) {
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+    textarea {
+        resize: vertical;
+    }
+
+    /* Buttons */
+
+    button {
+        font-family: inherit;
+    }
+
+    /* Table readability */
+
+    .responsive-table {
+        border-radius: var(--ui-radius);
+    }
+
+    .responsive-table th {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .responsive-table td {
+        vertical-align: middle;
+    }
+
+    /* Text selection */
+
+    ::selection {
+        background-color: #bfdbfe;
+        color: #172554;
+    }
+}
+
+/* =========================================
+   ACCESSIBLE TRANSITIONS
+   ========================================= */
+
+@media screen and (prefers-reduced-motion: no-preference) {
+    .workspace-sidebar nav a {
+        transition:
+            background-color 150ms ease,
+            color 150ms ease;
+    }
+}
+
+
+/* =========================================
+   DASHBOARD REFINEMENTS
+   ========================================= */
+
+@media screen {
+
+    .ui-card {
+        min-width: 0;
+        padding: 1.25rem;
+    }
+
+    .ui-card h2 {
+        letter-spacing: -0.015em;
+        line-height: 1.4;
+    }
+
+    .ui-card .stat-number {
+        margin-top: 0.5rem;
+        font-size: clamp(1.75rem, 3vw, 2.125rem);
+    }
+
+    html.dark .ui-card {
+        background-color: var(--ui-surface);
+        border-color: var(--ui-border);
+    }
+
+    html.dark .ui-card .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+        border-color: #475569;
+    }
+
+    html.dark .ui-card a.bg-slate-50:hover {
+        background-color: #334155;
+    }
+
+    progress {
+        overflow: hidden;
+        border: 0;
+        border-radius: 9999px;
+        background-color: #e2e8f0;
+    }
+
+    progress::-webkit-progress-bar {
+        background-color: #e2e8f0;
+        border-radius: 9999px;
+    }
+
+    progress::-webkit-progress-value {
+        background-color: #2563eb;
+        border-radius: 9999px;
+    }
+
+    progress::-moz-progress-bar {
+        background-color: #2563eb;
+        border-radius: 9999px;
+    }
+
+    html.dark progress,
+    html.dark progress::-webkit-progress-bar {
+        background-color: #475569;
+    }
+
+    html.dark progress::-webkit-progress-value {
+        background-color: #93c5fd;
+    }
+
+    html.dark progress::-moz-progress-bar {
+        background-color: #93c5fd;
+    }
+}
+
+@media screen and (min-width: 640px) {
+    .ui-card {
+        padding: 1.5rem;
+    }
+}
+
+
+/* =========================================
+   EQUIPMENT CATALOG AND DETAILS
+   ========================================= */
+
+@media screen {
+
+    /* Equipment catalog cards */
+
+    .equipment-card {
+        min-width: 0;
+        background-color: var(--ui-surface);
+        border: 1px solid var(--ui-border);
+        border-radius: 14px;
+        box-shadow: var(--ui-shadow);
+    }
+
+    /* Equipment image container */
+
+    .equipment-card-media {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 11rem;
+        background-color: #f1f5f9;
+        border-bottom: 1px solid var(--ui-border);
+        border-radius: 13px 13px 0 0;
+        overflow: hidden;
+        padding: 1rem;
+    }
+
+    .equipment-card-media img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Equipment details image */
+
+    .equipment-detail-media {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 12rem;
+        height: clamp(12rem, 30vw, 18rem);
+        background-color: #f1f5f9;
+        border: 1px solid var(--ui-border);
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 1.5rem;
+    }
+
+    .equipment-detail-media img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Equipment information blocks */
+
+    .equipment-info-item {
+        min-width: 0;
+        background-color: #f8fafc;
+        border: 1px solid var(--ui-border);
+        border-radius: 10px;
+        padding: 1rem;
+        overflow-wrap: anywhere;
+    }
+
+    /* Dark theme compatibility */
+
+    html.dark .equipment-card {
+        background-color: var(--ui-surface);
+        border-color: var(--ui-border);
+    }
+
+    html.dark .equipment-card-media,
+    html.dark .equipment-detail-media {
+        background-color: #172338;
+    }
+
+    html.dark .equipment-info-item {
+        background-color: #172338;
+    }
+
+    html.dark .equipment-card:focus-within {
+        border-color: #93c5fd;
+    }
+
+    /* Keyboard focus for equipment cards */
+
+    .equipment-card:focus-within {
+        border-color: var(--ui-focus);
+    }
+
+    /* Improve readability of filter controls */
+
+    form[data-instant-filters] label {
+        line-height: 1.5;
+    }
+
+    form[data-instant-filters] select,
+    form[data-instant-filters] input[type="search"] {
+        min-height: 44px;
+    }
+
+    form[data-instant-filters] summary {
+        line-height: 1.5;
+    }
+
+    /* Ensure buttons can wrap on narrow screens */
+
+    .equipment-card a,
+    .equipment-card button,
+    .equipment-info-item a,
+    .equipment-info-item button {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        white-space: normal;
+    }
+}
+
+/* Motion preferences */
+
+@media screen and (prefers-reduced-motion: no-preference) {
+
+    .equipment-card {
+        transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease;
+    }
+
+    .equipment-card:hover {
+        border-color: #64748b;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.10);
+    }
+
+    html.dark .equipment-card:hover {
+        border-color: #64748b;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.20);
+    }
+}
+
+/* Improved visibility in forced-color mode */
+
+@media (forced-colors: active) {
+
+    .equipment-card,
+    .equipment-info-item,
+    .equipment-card-media,
+    .equipment-detail-media {
+        border: 1px solid CanvasText;
+    }
+
+    :is(a, button, input, select, textarea, summary):focus-visible {
+        outline: 3px solid Highlight;
+        outline-offset: 3px;
+    }
+}
+
+
+/* =========================================
+   RESERVATIONS AND TABLE IMPROVEMENTS
+   ========================================= */
+
+@media screen {
+
+    /* Shared table container */
+
+    .ui-card.ui-table {
+        padding: 0;
+    }
+
+    .ui-table {
+        min-width: 0;
+        border-radius: var(--ui-radius);
+    }
+
+    .ui-table table {
+        border-collapse: collapse;
+    }
+
+    /* Table headers */
+
+    .ui-table thead th {
+        font-weight: 600;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .ui-table td,
+    .ui-table th {
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+    }
+
+    /* Table row highlights */
+
+    .ui-table tbody tr:hover,
+    .ui-table tbody tr:focus-within {
+        background-color: #f1f5f9;
+    }
+
+    html.dark .ui-table tbody tr:hover,
+    html.dark .ui-table tbody tr:focus-within {
+        background-color: #273449;
+    }
+
+    /* Table links */
+
+    .ui-table a {
+        text-underline-offset: 4px;
+    }
+
+    .ui-table a:hover {
+        text-decoration-thickness: 2px;
+    }
+
+    /* Reservation timeline */
+
+    .reservation-timeline {
+        margin-left: 0.5rem;
+    }
+
+    .reservation-timeline > li {
+        position: relative;
+        overflow-wrap: anywhere;
+    }
+
+    .reservation-timeline > li::before {
+        content: '';
+        position: absolute;
+        left: -1.65rem;
+        top: 1.25rem;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        background-color: var(--ui-focus);
+        border: 2px solid var(--ui-surface);
+    }
+
+    /* Checkbox accessibility */
+
+    .ui-card input[type="checkbox"],
+    .ui-table input[type="checkbox"] {
+        accent-color: #2563eb;
+    }
+
+    /* Prevent form elements from overflowing */
+
+    .ui-table input,
+    .ui-table select,
+    .ui-table textarea {
+        max-width: 100%;
+    }
+
+    /* Invalid form fields */
+
+    .ui-card [aria-invalid="true"] {
+        border-color: #b91c1c;
+    }
+
+    html.dark .ui-card [aria-invalid="true"] {
+        border-color: #fca5a5;
+    }
+
+    /* Form error messages */
+
+    .ui-card [role="alert"] {
+        overflow-wrap: anywhere;
+    }
+
+    /* Consistent action buttons */
+
+    .ui-table button,
+    .ui-table a {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
+    /* Accessible scrolling containers */
+
+    .responsive-table:focus-visible {
+        outline: 3px solid var(--ui-focus);
+        outline-offset: 4px;
+    }
+
+    .responsive-table {
+        scrollbar-width: auto;
+        scrollbar-color: #64748b transparent;
+    }
+
+    /* Improve dark mode compatibility */
+
+    html.dark .ui-table {
+        border-color: var(--ui-border);
+    }
+
+    html.dark .ui-table thead {
+        background-color: #1e293b;
+        color: #e2e8f0;
+    }
+
+    html.dark .ui-table tbody tr {
+        border-color: #475569;
+    }
+
+    html.dark .reservation-timeline {
+        border-color: #475569;
+    }
+
+    /* Neutral status badge compatibility */
+
+    html.dark .bg-slate-200 {
+        background-color: #334155;
+    }
+}
+
+/* Respect motion preferences */
+
+@media screen and (prefers-reduced-motion: no-preference) {
+
+    .ui-table tbody tr {
+        transition: background-color 150ms ease;
+    }
+}
+
+/* Windows high contrast and forced colors */
+
+@media (forced-colors: active) {
+
+    .ui-table,
+    .equipment-info-item {
+        border: 1px solid CanvasText;
+    }
+
+    .reservation-timeline > li::before {
+        background-color: Highlight;
+        border-color: Canvas;
+    }
+
+    .ui-table:focus-visible,
+    .ui-card :is(a, button, input, select, textarea):focus-visible {
+        outline: 3px solid Highlight;
+        outline-offset: 3px;
+    }
+}
+
+
+/* =========================================
+   RESERVATION TABLE LAYOUT FIX
+   ========================================= */
+
+@media screen {
+
+    /* Make the table occupy the entire container */
+    .ui-table {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .responsive-table.ui-table table {
+        width: 100%;
+        min-width: max(100%, 48rem);
+        table-layout: auto;
+        border-collapse: collapse;
+    }
+
+    /* Improve column spacing */
+    .ui-table th,
+    .ui-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    /* Distinguish table headers */
+    .ui-table thead {
+        background-color: #f1f5f9;
+    }
+
+    .ui-table thead th {
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--ui-border);
+    }
+
+    /* Consistent row borders */
+    .ui-table tbody tr {
+        border-bottom: 1px solid var(--ui-border);
+    }
+
+    .ui-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    /* Dark mode compatibility */
+    html.dark .ui-table thead {
+        background-color: #172338;
+    }
+
+    html.dark .ui-table tbody tr:hover,
+    html.dark .ui-table tbody tr:focus-within {
+        background-color: #273449;
+    }
+
+    /* Preserve readable spacing on smaller screens */
+    @media (max-width: 640px) {
+
+        .ui-table th,
+        .ui-table td {
+            padding: 0.875rem 1rem;
+        }
+    }
+}
+
+
+/* =========================================
+   BUTTONS, FORMS, MODALS AND NOTIFICATIONS
+   ========================================= */
+
+@media screen {
+
+    /* Shared buttons */
+
+    .ui-button {
+        min-height: 44px;
+        max-width: 100%;
+        line-height: 1.5;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-weight: 600;
+    }
+
+    .ui-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .ui-button-primary {
+        background-color: #1d4ed8;
+        color: #ffffff;
+    }
+
+    .ui-button-primary:not(:disabled):hover {
+        background-color: #1e40af;
+    }
+
+    .ui-button-danger {
+        background-color: #b91c1c;
+        color: #ffffff;
+    }
+
+    .ui-button-danger:not(:disabled):hover {
+        background-color: #991b1b;
+    }
+
+    .ui-button-secondary {
+        background-color: var(--ui-surface);
+        color: var(--ui-text);
+        border-color: var(--ui-border);
+    }
+
+    .ui-button-secondary:not(:disabled):hover {
+        background-color: #e2e8f0;
+    }
+
+    html.dark .ui-button-secondary {
+        background-color: #1e293b;
+        color: #f8fafc;
+        border-color: #64748b;
+    }
+
+    html.dark .ui-button-secondary:not(:disabled):hover {
+        background-color: #334155;
+    }
+
+    /* Shared form controls */
+
+    .ui-input {
+        min-height: 44px;
+        max-width: 100%;
+        line-height: 1.5;
+        border-color: #94a3b8;
+    }
+
+    html.dark .ui-input {
+        background-color: #172338;
+        border-color: #64748b;
+        color: #f8fafc;
+    }
+
+    .ui-input::placeholder {
+        color: #64748b;
+        opacity: 1;
+    }
+
+    html.dark .ui-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .ui-input[aria-invalid="true"] {
+        border-color: #b91c1c;
+    }
+
+    html.dark .ui-input[aria-invalid="true"] {
+        border-color: #fca5a5;
+    }
+
+    .ui-input-error {
+        color: #b91c1c;
+        overflow-wrap: anywhere;
+    }
+
+    html.dark .ui-input-error {
+        color: #fca5a5;
+    }
+
+    /* Native modal dialogs */
+
+    .ui-modal,
+    dialog[aria-modal="true"],
+    dialog[aria-labelledby="confirm-action-title"] {
+        background-color: var(--ui-surface);
+        color: var(--ui-text);
+        border: 1px solid var(--ui-border);
+        border-radius: 16px;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .ui-modal::backdrop,
+    dialog[aria-modal="true"]::backdrop,
+    dialog[aria-labelledby="confirm-action-title"]::backdrop {
+        background-color: rgba(2, 6, 23, 0.72);
+    }
+
+    html.dark .ui-modal,
+    html.dark dialog[aria-modal="true"],
+    html.dark dialog[aria-labelledby="confirm-action-title"] {
+        background-color: #1e293b;
+        border-color: #475569;
+        color: #f8fafc;
+        color-scheme: dark;
+    }
+
+    html.dark .ui-modal .bg-white {
+        background-color: #1e293b;
+    }
+
+    html.dark .ui-modal .bg-slate-50 {
+        background-color: #172338;
+    }
+
+    /* Confirmation dialog text */
+
+    #confirm-action-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+    }
+
+    #confirm-action-text {
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+    }
+
+    /* Flash notifications */
+
+    .ui-flash {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .ui-flash button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    html.dark .ui-flash.bg-green-50 {
+        background-color: #14352b;
+        border-color: #166534;
+        color: #86efac;
+    }
+
+    html.dark .ui-flash.bg-red-50 {
+        background-color: #421e29;
+        border-color: #991b1b;
+        color: #fca5a5;
+    }
+
+    html.dark .ui-flash button:hover {
+        background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Notification center */
+
+    .notification-card {
+        position: relative;
+        min-width: 0;
+    }
+
+    .notification-unread {
+        border-inline-start: 4px solid #2563eb;
+    }
+
+    html.dark .notification-unread {
+        border-inline-start-color: #93c5fd;
+    }
+
+    .notification-card h3 {
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .notification-card a,
+    .notification-card button {
+        max-width: 100%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* Accessible keyboard focus */
+
+    .ui-button:focus-visible,
+    .ui-input:focus-visible,
+    .ui-modal :is(a, button, input, select, textarea):focus-visible,
+    .notification-card :is(a, button):focus-visible,
+    .ui-flash button:focus-visible {
+        outline: 3px solid var(--ui-focus);
+        outline-offset: 3px;
+    }
+
+    /* Improve small-screen dialog layout */
+
+    @media (max-width: 640px) {
+
+        .ui-modal {
+            width: calc(100% - 1.5rem);
+            max-height: calc(100dvh - 1.5rem);
+            border-radius: 12px;
+        }
+
+        .notification-card {
+            padding: 1rem;
+        }
+    }
+}
+
+/* Respect reduced-motion preferences */
+
+@media screen and (prefers-reduced-motion: no-preference) {
+
+    .ui-button {
+        transition:
+            background-color 150ms ease,
+            border-color 150ms ease,
+            color 150ms ease;
+    }
+
+    .ui-input {
+        transition:
+            border-color 150ms ease,
+            box-shadow 150ms ease;
+    }
+}
+
+/* Support Windows high contrast mode */
+
+@media (forced-colors: active) {
+
+    .ui-button,
+    .ui-input,
+    .ui-modal,
+    .ui-flash,
+    .notification-card {
+        border: 1px solid CanvasText;
+    }
+
+    .notification-unread {
+        border-inline-start: 4px solid Highlight;
+    }
+
+    :is(.ui-button, .ui-input):focus-visible {
+        outline: 3px solid Highlight;
+        outline-offset: 3px;
+    }
+}
+

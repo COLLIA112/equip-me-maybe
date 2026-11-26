@@ -29,7 +29,7 @@
             <div class="min-w-0 flex-1">
                 <label for="{{ $searchId }}" class="mb-1 block text-sm font-semibold">{{ $model === null ? 'Search equipment' : 'Search this model' }}</label>
                 <input id="{{ $searchId }}" type="search" name="q" data-filter-search
-                       @if ($model === null) data-global-search aria-keyshortcuts="/" @endif
+                       @if ($model === null) data-global-search aria-keyshortcuts="Alt+/" @endif
                        value="{{ $filters['q'] ?? '' }}" maxlength="150" placeholder="Model, serial, or QR"
                        class="min-h-11 w-full rounded-md border-slate-300 text-base sm:text-sm">
             </div>

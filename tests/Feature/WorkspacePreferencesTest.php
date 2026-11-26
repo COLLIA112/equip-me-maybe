@@ -42,7 +42,7 @@ class WorkspacePreferencesTest extends TestCase
             $this->assertTrue($user->fresh()->preferences['remember_filters']);
             $this->get(route('profile.edit'))->assertOk()->assertSee('data-theme="dark"', false)
                 ->assertSee('data-global-search', false)->assertSee('aria-label="Breadcrumb"', false)
-                ->assertSee('aria-keyshortcuts="/"', false)->assertSee('initials avatar');
+                ->assertSee('aria-keyshortcuts="Alt+/"', false)->assertSee('initials avatar');
         }
     }
 

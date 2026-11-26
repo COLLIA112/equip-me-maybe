@@ -1,1 +1,4 @@
-<div {{ $attributes->merge(['class' => 'bg-white rounded-lg shadow-sm border border-slate-200 p-5']) }}>{{ $slot }}</div>
+
+<div {{ $attributes->merge(['class' => 'ui-card']) }}>
+    {{ $slot }}
+</div>
